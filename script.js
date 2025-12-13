@@ -563,14 +563,6 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
     return `${cleanUser}@careerfinder.app`;
   };
 
-  // MOCK LOGIN HELPER FOR SCHOOL PROJECT
-  const forceMockLogin = (userData) => {
-      localStorage.setItem('careerfinder_mock_user', JSON.stringify(userData));
-      // Dispatch a custom event so App knows to update
-      window.dispatchEvent(new Event('storage'));
-      window.location.reload();
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -592,58 +584,35 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
         });
 
         if (signUpError) {
-             // FALLBACK FOR SCHOOL PROJECT: If Supabase fails, assume mock login
-             console.log("Supabase failed, falling back to mock login");
-             forceMockLogin({
-                 id: 'mock-user-id',
-                 email: generatedEmail,
-                 user_metadata: { username, tier: selectedTier, interest }
-             });
-             return;
+             throw signUpError;
         }
 
-        // If Signup worked but requires email confirmation (which we can't do easily in a demo)
+        // --- ONLINE MODE EXPLANATION ---
+        // If data.user exists but data.session is null, it means 'Email Confirm' is ON in Supabase
         if (data.user && !data.session) {
-            alert("Note: In a real app, you would need to confirm your email. For this demo, we will log you in immediately.");
-            forceMockLogin({
-                 id: data.user.id,
-                 email: generatedEmail,
-                 user_metadata: { username, tier: selectedTier, interest }
-             });
-             return;
+            alert(`Account created! \n\nIMPORTANT: You cannot log in yet because Supabase sent a verification email to '${generatedEmail}', which is a fake email.\n\nTO FIX THIS: Go to your Supabase Dashboard -> Authentication -> Providers -> Email -> Turn OFF "Confirm email". Then try logging in.`);
+            return;
         }
         
         onClose();
 
       } else {
+        // LOGIN
         if (!username.trim() || !password.trim()) throw new Error('Please enter username and password.');
 
         const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: generatedEmail,
-          password
+            email: generatedEmail,
+            password
         });
 
         if (signInError) {
-             // FALLBACK FOR DEMO: Allow login even if Supabase rejects (e.g. unconfirmed email)
-             // Check if we have a mocked user with this name
-             const storedMock = localStorage.getItem('careerfinder_mock_user');
-             if (storedMock) {
-                 const parsed = JSON.parse(storedMock);
-                 if (parsed.user_metadata.username === username) {
-                     window.location.reload();
-                     return;
-                 }
+             // Show actual error from Supabase so user knows why it failed
+             if (signInError.message.includes("Email not confirmed")) {
+                 throw new Error("Login failed: Email not confirmed. Please disable 'Confirm email' in your Supabase Dashboard.");
              }
-             
-             // If completely new but failing, maybe pretend it worked for the demo?
-             alert("Login failed on server, but entering 'Offline Demo Mode' for grading.");
-             forceMockLogin({
-                 id: 'demo-user',
-                 email: generatedEmail,
-                 user_metadata: { username, tier: 'BUNDLE', interest: 'Computer Science' } // Default to paid/CS for demo
-             });
-             return;
+             throw signInError;
         }
+        
         onClose();
       }
     } catch (err) {
@@ -1015,18 +984,6 @@ const App = () => {
           tier: session.user.user_metadata.tier,
           interest: session.user.user_metadata.interest
         });
-      } else {
-        // 2. Try Mock Session (For School Project Demo)
-        const mock = localStorage.getItem('careerfinder_mock_user');
-        if (mock) {
-            const parsed = JSON.parse(mock);
-            setUser({
-                id: parsed.id,
-                name: parsed.user_metadata.username,
-                tier: parsed.user_metadata.tier,
-                interest: parsed.user_metadata.interest
-            });
-        }
       }
     });
 
@@ -1041,12 +998,8 @@ const App = () => {
         setShowLoginModal(false); 
         setPreselectedInterest(undefined);
       } else {
-        // Fallback check for Mock user if real logout happened
-        const mock = localStorage.getItem('careerfinder_mock_user');
-        if (!mock) {
-            setUser(null);
-            setView('landing'); 
-        }
+        setUser(null);
+        setView('landing'); 
       }
     });
 

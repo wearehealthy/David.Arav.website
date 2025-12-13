@@ -10,8 +10,8 @@ import { createClient } from '@supabase/supabase-js';
 // YOUR PROVIDED API KEY
 const GEMINI_API_KEY = "AIzaSyADwJbM9vyTIBGjsYkSAhRbN4pR_qUgJy0"; 
 
-const supabaseUrl = 'https://iildoyyezcqvlcxvohvh.supabase.co';
-const supabaseKey = 'sb_publishable_BXdW8AdxKXIpMfbMwyyZ_A_Ejd2PpPk';
+const supabaseUrl = 'https://bwjjfnkuqnravvfytxbf.supabase.co';
+const supabaseKey = 'sb_publishable_9z5mRwy-X0zERNX7twZzPw_RdskfL8s';
 
 // ==========================================
 // 1. DATA & CONSTANTS

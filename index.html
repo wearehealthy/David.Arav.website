@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CareerFinder AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Babel for in-browser compilation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+      body { font-family: 'Inter', sans-serif; }
+      .scrollbar-hide::-webkit-scrollbar { display: none; }
+      .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+      
+      /* Animation Utilities */
+      .animate-in { animation-duration: 0.5s; animation-fill-mode: both; }
+      .fade-in { animation-name: fadeIn; }
+      .zoom-in { animation-name: zoomIn; }
+      .zoom-in-95 { animation-name: zoomIn95; }
+      .slide-in-from-bottom-4 { animation-name: slideInBottom4; }
+      .slide-in-from-right-4 { animation-name: slideInRight4; }
+
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+      @keyframes zoomIn95 { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+      @keyframes slideInBottom4 { from { transform: translateY(1rem); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+      @keyframes slideInRight4 { from { transform: translateX(1rem); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "@google/genai": "https://esm.sh/@google/genai@0.1.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
+</head>
+  <body class="bg-slate-50 text-slate-900">
+    <div id="root"></div>
+
+    <!-- MAIN APPLICATION CODE -->
+    <script type="text/babel" data-presets="react,typescript">
+import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom/client';
+import { createClient } from '@supabase/supabase-js';
+import { GoogleGenAI } from "@google/genai";
+
+// -----------------------------------------------------------------------------
+// TYPES
+// -----------------------------------------------------------------------------
+enum UserTier {
+  GUEST = 'GUEST',
+  PAID = 'PAID'
+}
+
+interface User {
+  id: string;
+  name: string;
+  tier: UserTier;
+  interest?: string;
+}
+
+interface Course {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  image: string;
+  tags: string[];
+}
+
+interface Category {
+  id: string;
+  title: string;
+  type: 'CLUSTER';
+  courses: Course[];
+}
+
+interface ChatMessage {
+  role: 'user' | 'model';
+  text: string;
+  isError?: boolean;
+}
+
+// -----------------------------------------------------------------------------
+// CONSTANTS
+// -----------------------------------------------------------------------------
+const CATEGORIES: Category[] = [
+  {
+    id: 'restaurant-cluster',
+    title: 'Restaurant',
+    type: 'CLUSTER',
+    courses: [
+      {
+        id: 'rest-001',
+        title: 'Open Your Own Restaurant',
+        description: 'A step-by-step guide to location, menu, and hiring.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=640&q=80',
+        tags: ['Business', 'Food']
+      },
+      {
+        id: 'rest-002',
+        title: 'Head Chef Training',
+        description: 'Managing a high-pressure kitchen environment.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1583394293214-28ded15ee548?auto=format&fit=crop&w=640&q=80',
+        tags: ['Cooking', 'Leadership']
+      },
+      {
+        id: 'rest-003',
+        title: 'Coffee Shop Culture',
+        description: 'Barista skills and roasting your own beans.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=640&q=80',
+        tags: ['Drinks', 'Cafe']
+      },
+      {
+        id: 'rest-004',
+        title: 'Artisan Bakery',
+        description: 'Mastering sourdough, pastries, and running a bakery.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=640&q=80',
+        tags: ['Baking', 'Business']
+      },
+      {
+        id: 'rest-005',
+        title: 'Food Truck Revolution',
+        description: 'Mobile food business basics.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?auto=format&fit=crop&w=640&q=80',
+        tags: ['Startup', 'Food']
+      }
+    ]
+  },
+  {
+    id: 'podcasting-cluster',
+    title: 'Podcasting & Modern Media',
+    type: 'CLUSTER',
+    courses: [
+      {
+        id: 'pod-001',
+        title: 'Start Your Podcast',
+        description: 'From buying a mic to publishing on Spotify. Your voice matters.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1589903308904-1010c2294adc?auto=format&fit=crop&w=640&q=80',
+        tags: ['Media', 'Audio']
+      },
+      {
+        id: 'pod-002',
+        title: 'Viral Content Creation',
+        description: 'How to make short clips that get millions of views.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=640&q=80',
+        tags: ['Social', 'Video']
+      },
+      {
+        id: 'pod-003',
+        title: 'Streamer Setup 101',
+        description: 'Lighting, OBS, and engaging your chat live.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=640&q=80',
+        tags: ['Live', 'Tech']
+      },
+      {
+        id: 'pod-004',
+        title: 'Interview Techniques',
+        description: 'How to talk to guests and get great stories.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=640&q=80',
+        tags: ['Skills', 'Talk']
+      },
+      {
+        id: 'pod-005',
+        title: 'Monetize Your Brand',
+        description: 'Sponsorships, merch, and making money online.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=640&q=80',
+        tags: ['Business', 'Money']
+      }
+    ]
+  },
+  {
+    id: 'cs-cluster',
+    title: 'Computer Science',
+    type: 'CLUSTER',
+    courses: [
+      {
+        id: 'cs-000',
+        title: 'General Overview: The Digital World',
+        description: 'Not sure which tech path to take? This course surveys everything from code to hardware to help you decide.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=640&q=80',
+        tags: ['General', 'Overview']
+      },
+      {
+        id: 'cs-101',
+        title: 'Introduction to Algorithms',
+        description: 'Learn the fundamentals of sorting, searching, and graph algorithms.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&w=640&q=80',
+        tags: ['Coding', 'Logic']
+      },
+      {
+        id: 'cs-202',
+        title: 'AI & Machine Learning',
+        description: 'Understand neural networks and how to build intelligent agents.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=640&q=80',
+        tags: ['AI', 'Python']
+      },
+      {
+        id: 'cs-303',
+        title: 'Cybersecurity Basics',
+        description: 'Protect systems from attacks and understand encryption.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=640&q=80',
+        tags: ['Security', 'Network']
+      },
+      {
+        id: 'cs-404',
+        title: 'Full Stack Web Dev',
+        description: 'Build complete websites from database to user interface.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1547658719-da2b51169166?auto=format&fit=crop&w=640&q=80',
+        tags: ['Web', 'Design']
+      }
+    ]
+  },
+  {
+    id: 'business-cluster',
+    title: 'Business Administration',
+    type: 'CLUSTER',
+    courses: [
+      {
+        id: 'bus-000',
+        title: 'General Overview: Corporate World',
+        description: 'Learn the language of money and management before diving deep.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=640&q=80',
+        tags: ['General', 'Money']
+      },
+      {
+        id: 'bus-101',
+        title: 'Marketing Strategy',
+        description: 'Master the 4 Ps of marketing and digital outreach.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1533750516457-a7f992034fec?auto=format&fit=crop&w=640&q=80',
+        tags: ['Marketing', 'Strategy']
+      },
+      {
+        id: 'bus-303',
+        title: 'Financial Accounting',
+        description: 'Read balance sheets and manage corporate finances effectively.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1554224155-98406858d0ade?auto=format&fit=crop&w=640&q=80',
+        tags: ['Finance', 'Math']
+      },
+      {
+        id: 'bus-404',
+        title: 'Entrepreneurship',
+        description: 'How to start a business from scratch and not fail immediately.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=640&q=80',
+        tags: ['Startup', 'Leadership']
+      },
+      {
+        id: 'bus-505',
+        title: 'Project Management',
+        description: 'Agile methodologies and leading teams to success.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=640&q=80',
+        tags: ['Management', 'Teams']
+      }
+    ]
+  },
+  {
+    id: 'bio-cluster',
+    title: 'Biology & Life Sciences',
+    type: 'CLUSTER',
+    courses: [
+      {
+        id: 'bio-000',
+        title: 'General Overview: Study of Life',
+        description: 'A broad look at all living things to help you pick between plants, animals, or humans.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=640&q=80',
+        tags: ['General', 'Science']
+      },
+      {
+        id: 'bio-101',
+        title: 'Cellular Biology',
+        description: 'The building blocks of life: structure and function of cells.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&w=640&q=80',
+        tags: ['Science', 'Lab']
+      },
+      {
+        id: 'bio-202',
+        title: 'Genetics',
+        description: 'Understanding DNA, heredity, and gene mapping.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1530210124550-912dc1381cb8?auto=format&fit=crop&w=640&q=80',
+        tags: ['DNA', 'Research']
+      },
+      {
+        id: 'bio-303',
+        title: 'Marine Biology',
+        description: 'Explore the depths of the ocean and marine ecosystems.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=640&q=80',
+        tags: ['Ocean', 'Animals']
+      },
+      {
+        id: 'bio-404',
+        title: 'Human Anatomy',
+        description: 'Detailed study of the human body structure and systems.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&w=640&q=80',
+        tags: ['Health', 'Medical']
+      }
+    ]
+  },
+  {
+    id: 'psych-cluster',
+    title: 'Psychology',
+    type: 'CLUSTER',
+    courses: [
+      {
+        id: 'psy-000',
+        title: 'General Overview: The Human Mind',
+        description: 'Why do we think? An overview of behavioral science.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1555819206-7b30da4f1506?auto=format&fit=crop&w=640&q=80',
+        tags: ['General', 'Mind']
+      },
+      {
+        id: 'psy-101',
+        title: 'Cognitive Psychology',
+        description: 'Memory, perception, and problem solving.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=640&q=80',
+        tags: ['Brain', 'Thought']
+      },
+      {
+        id: 'psy-202',
+        title: 'Child Development',
+        description: 'How humans grow from infancy to adolescence.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1485546246426-74dc88dec4d9?auto=format&fit=crop&w=640&q=80',
+        tags: ['Kids', 'Growth']
+      },
+      {
+        id: 'psy-303',
+        title: 'Clinical Psychology',
+        description: 'Diagnosing and treating mental health disorders.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=640&q=80',
+        tags: ['Health', 'Therapy']
+      },
+      {
+        id: 'psy-404',
+        title: 'Social Psychology',
+        description: 'How groups influence individual behavior.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=640&q=80',
+        tags: ['Society', 'People']
+      }
+    ]
+  },
+  {
+    id: 'art-cluster',
+    title: 'Creative Arts',
+    type: 'CLUSTER',
+    courses: [
+      {
+        id: 'art-000',
+        title: 'General Overview: Unleashing Creativity',
+        description: 'Try a little bit of everything to find your medium.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=640&q=80',
+        tags: ['General', 'Art']
+      },
+      {
+        id: 'art-001',
+        title: 'Digital Painting',
+        description: 'From sketching to final rendering using digital tools.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1515462277126-2dd0c162007a?auto=format&fit=crop&w=640&q=80',
+        tags: ['Design', 'Creative']
+      },
+      {
+        id: 'art-002',
+        title: 'Photography 101',
+        description: 'Mastering composition and lighting for stunning photos.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=640&q=80',
+        tags: ['Photo', 'Camera']
+      },
+      {
+        id: 'art-003',
+        title: 'Sculpting Basics',
+        description: 'Working with clay and 3D forms.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?auto=format&fit=crop&w=640&q=80',
+        tags: ['3D', 'Clay']
+      },
+      {
+        id: 'art-004',
+        title: 'Art History',
+        description: 'From Renaissance to Modernism.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1518998053901-5348d3969105?auto=format&fit=crop&w=640&q=80',
+        tags: ['History', 'Culture']
+      }
+    ]
+  },
+  {
+    id: 'music-cluster',
+    title: 'Music Production',
+    type: 'CLUSTER',
+    courses: [
+       {
+        id: 'mus-000',
+        title: 'General Overview: Sound & Theory',
+        description: 'Understanding rhythm, melody, and how music works.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1507838153414-b4b713384ebd?auto=format&fit=crop&w=640&q=80',
+        tags: ['General', 'Sound']
+      },
+      {
+        id: 'mus-001',
+        title: 'Beat Making Basics',
+        description: 'Create your first track using standard DAWs.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=640&q=80',
+        tags: ['Audio', 'Creative']
+      },
+      {
+        id: 'mus-002',
+        title: 'Guitar for Beginners',
+        description: 'Chords, strumming patterns, and basic songs.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&w=640&q=80',
+        tags: ['Instrument', 'Strings']
+      },
+      {
+        id: 'mus-003',
+        title: 'Piano Fundamentals',
+        description: 'Reading sheet music and playing keys.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?auto=format&fit=crop&w=640&q=80',
+        tags: ['Instrument', 'Keys']
+      },
+      {
+        id: 'mus-004',
+        title: 'Vocal Training',
+        description: 'Improve your singing voice and range.',
+        price: 10,
+        image: 'https://images.unsplash.com/photo-1516280440614-6697288d5d38?auto=format&fit=crop&w=640&q=80',
+        tags: ['Voice', 'Singing']
+      }
+    ]
+  }
+];
+
+// -----------------------------------------------------------------------------
+// SERVICES
+// -----------------------------------------------------------------------------
+const supabaseUrl = 'https://iildoyyezcqvlcxvohvh.supabase.co';
+const supabaseKey = 'sb_publishable_BXdW8AdxKXIpMfbMwyyZ_A_Ejd2PpPk';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// GEMINI SERVICE
+// Safely check if process is defined (it won't be in simple browser environments)
+const geminiApiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) ? process.env.API_KEY : '';
+
+let chatSession: any = null;
+let currentTier: UserTier = UserTier.GUEST;
+let currentInterest: string | undefined = undefined;
+
+const initializeChat = (tier: UserTier, interest?: string) => {
+  if (!geminiApiKey) {
+    // Silent fail if no key provided in code, but the app will work until chat is used
+    return;
+  }
+
+  currentTier = tier;
+  currentInterest = interest;
+  const ai = new GoogleGenAI({ apiKey: geminiApiKey });
+
+  let systemInstruction = "";
+
+  if (tier === UserTier.PAID && interest) {
+    const cluster = CATEGORIES.find(c => c.title === interest);
+    
+    if (cluster) {
+      const curriculum = cluster.courses.map(c => 
+        `- Course Title: "${c.title}"\n  Description: ${c.description}\n  Topics/Tags: ${c.tags.join(', ')}`
+      ).join('\n\n');
+
+      systemInstruction = `You are CareerBot, an expert academic advisor and tutor specifically for the "${interest}" career path.
+      You have full access to the student's paid curriculum. Here are the courses they have purchased:
+      ${curriculum}
+      YOUR RESPONSIBILITIES:
+      1. You are a tutor. If the student says a course "doesn't make sense", explain the concepts related to that course's title and description in simple terms.
+      2. Use your broader knowledge of ${interest} to fill in the gaps. Even if the description is short, you know what these topics entail.
+      3. Be encouraging, bright, and helpful.`;
+    } else {
+        systemInstruction = "You are CareerBot. You are a helpful AI tutor. The user has a premium account but the specific course data could not be loaded. Help them with general career advice.";
+    }
+  } else {
+    systemInstruction = "You are CareerBot (Demo Mode). You are restricted. You can ONLY answer general questions about why education is important in 1 short sentence. If the user asks about specific course content, exam details, or career advice, you must say: 'I cannot access that information in Demo Mode. Please sign in and purchase the course.' Do not hallucinate course details.";
+  }
+
+  chatSession = ai.chats.create({
+    model: 'gemini-2.5-flash',
+    config: { systemInstruction },
+  });
+};
+
+const sendMessageToAgent = async (message: string): Promise<string> => {
+  if (!chatSession) {
+    initializeChat(currentTier, currentInterest);
+  }
+  
+  if (!chatSession) {
+      return "CareerBot Error: I haven't been configured with an API Key yet.";
+  }
+
+  try {
+    const result = await chatSession.sendMessage({
+      message: message
+    });
+    return result.text || "I couldn't think of a response.";
+  } catch (error) {
+    console.error("Gemini Error:", error);
+    return "Sorry, I am having trouble connecting right now.";
+  }
+};
+
+// -----------------------------------------------------------------------------
+// COMPONENTS
+// -----------------------------------------------------------------------------
+
+// Button Component
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+}
+const Button: React.FC<ButtonProps> = ({ 
+  children, 
+  variant = 'primary', 
+  size = 'md', 
+  className = '', 
+  ...props 
+}) => {
+  const baseStyles = "inline-flex items-center justify-center rounded-lg font-bold transition-all transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+  const variants = {
+    primary: "bg-green-500 text-white hover:bg-green-600 focus:ring-green-400 shadow-md hover:shadow-lg",
+    secondary: "bg-orange-400 text-white hover:bg-orange-500 focus:ring-orange-300 shadow-md",
+    outline: "border-2 border-green-200 bg-white text-green-700 hover:bg-green-50 focus:ring-green-400",
+    ghost: "text-green-700 hover:bg-green-100",
+  };
+  const sizes = {
+    sm: "px-3 py-1.5 text-xs",
+    md: "px-6 py-2.5 text-sm",
+    lg: "px-8 py-4 text-base",
+  };
+  return (
+    <button className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`} {...props}>
+      {children}
+    </button>
+  );
+};
+
+// Modal Component
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  initialMode: 'LOGIN' | 'SIGNUP';
+  preselectedInterest?: string;
+}
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
+  const [view, setView] = useState<'SELECT_PLAN' | 'FORM'>('FORM');
+  const [mode, setMode] = useState<'LOGIN' | 'SIGNUP'>(initialMode);
+  const [selectedTier, setSelectedTier] = useState<'GUEST' | 'PAID' | null>(null);
+  
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [interest, setInterest] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode);
+      setError('');
+      setUsername('');
+      setPassword('');
+      if (preselectedInterest) {
+        setInterest(preselectedInterest);
+      } else {
+        setInterest('');
+      }
+      if (initialMode === 'SIGNUP') {
+        setView('SELECT_PLAN');
+      } else {
+        setView('FORM');
+      }
+    }
+  }, [isOpen, initialMode, preselectedInterest]);
+
+  if (!isOpen) return null;
+
+  const handlePlanSelect = (tier: 'GUEST' | 'PAID') => {
+    setSelectedTier(tier);
+    setView('FORM');
+    setError('');
+  };
+
+  const generateEmail = (user: string) => {
+    const cleanUser = user.trim().toLowerCase().replace(/\s+/g, '');
+    return `${cleanUser}@careerfinder.app`;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const generatedEmail = generateEmail(username);
+
+      if (mode === 'SIGNUP') {
+        if (!username.trim() || !password.trim()) throw new Error('Please fill in all fields.');
+        if (!interest) throw new Error('Please select an Interest.');
+
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: generatedEmail,
+          password,
+          options: {
+            data: { username: username, tier: selectedTier, interest }
+          }
+        });
+        if (signUpError) throw signUpError;
+        onClose();
+
+      } else {
+        if (!username.trim() || !password.trim()) throw new Error('Please enter username and password.');
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: generatedEmail,
+          password
+        });
+        if (signInError) {
+            if (signInError.message.includes("Invalid login")) {
+                throw new Error("Incorrect username or password.");
+            }
+            throw signInError;
+        }
+        onClose();
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleMode = () => {
+    const newMode = mode === 'LOGIN' ? 'SIGNUP' : 'LOGIN';
+    setMode(newMode);
+    setError('');
+    if (newMode === 'SIGNUP') {
+      setView('SELECT_PLAN');
+    } else {
+      setView('FORM');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="flex justify-between items-center p-4 border-b border-slate-100">
+          <h3 className="text-lg font-bold text-slate-900">
+            {mode === 'LOGIN' ? 'Welcome Back' : (view === 'SELECT_PLAN' ? 'Choose Your Path' : 'Create Profile')}
+          </h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">✕</button>
+        </div>
+        <div className="p-6">
+          {view === 'SELECT_PLAN' && mode === 'SIGNUP' ? (
+            <div className="space-y-6">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🚀</div>
+                <p className="text-slate-500 text-sm">Select a plan to access CareerFinder</p>
+              </div>
+              <div className="space-y-4">
+                <button onClick={() => handlePlanSelect('PAID')} className="w-full flex items-center justify-between p-5 border-2 border-green-500 bg-green-50 rounded-xl hover:bg-green-100 transition shadow-sm group">
+                  <div className="text-left">
+                    <div className="font-bold text-green-900 text-lg group-hover:text-green-700">Premium Access</div>
+                    <div className="text-xs text-green-700 font-medium">Unlock 2 Courses + AI Tutor</div>
+                  </div>
+                  <div className="font-bold text-green-700 bg-white px-3 py-1 rounded-lg shadow-sm">$10.00</div>
+                </button>
+                <button onClick={() => handlePlanSelect('GUEST')} className="w-full flex items-center justify-between p-5 border-2 border-slate-100 rounded-xl hover:border-slate-300 transition">
+                  <div className="text-left">
+                    <div className="font-bold text-slate-800">Demo Mode</div>
+                    <div className="text-xs text-slate-500">Free Module 1 Preview</div>
+                  </div>
+                  <div className="font-bold text-slate-500">Free</div>
+                </button>
+              </div>
+              <div className="text-center pt-2">
+                <button onClick={toggleMode} className="text-sm text-green-600 hover:text-green-700 font-medium hover:underline">Already have an account? Log In</button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {mode === 'SIGNUP' && (
+                <div className="text-center mb-6">
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${selectedTier === 'PAID' ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-600'}`}>
+                    Selected: {selectedTier === 'PAID' ? 'Premium Plan' : 'Demo Mode'}
+                  </span>
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
+                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 outline-none bg-slate-50" placeholder="FutureCEO123" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 outline-none bg-slate-50" placeholder="••••••••" required />
+              </div>
+              {mode === 'SIGNUP' && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    {preselectedInterest ? 'Selected Bundle (Auto-filled)' : 'Select Your Course Bundle'}
+                  </label>
+                  <select value={interest} onChange={(e) => setInterest(e.target.value)} disabled={!!preselectedInterest} className={`appearance-none w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 outline-none bg-slate-50 ${preselectedInterest ? 'bg-green-50 text-green-800 border-green-200' : ''}`} required>
+                       <option value="" disabled>-- Choose a Cluster --</option>
+                       {CATEGORIES.map(cat => <option key={cat.id} value={cat.title}>{cat.title}</option>)}
+                  </select>
+                </div>
+              )}
+              {error && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{error}</p>}
+              <div className="pt-2 flex flex-col gap-3">
+                <div className="flex gap-3">
+                  {mode === 'SIGNUP' && <Button type="button" variant="ghost" onClick={() => setView('SELECT_PLAN')} className="w-1/3">Back</Button>}
+                  <Button type="submit" className={mode === 'SIGNUP' ? "w-2/3" : "w-full"} disabled={loading}>
+                    {loading ? 'Processing...' : (mode === 'SIGNUP' ? 'Create Account' : 'Log In')}
+                  </Button>
+                </div>
+                <div className="text-center">
+                  <button type="button" onClick={toggleMode} className="text-sm text-green-600 hover:text-green-700 font-medium hover:underline">
+                    {mode === 'SIGNUP' ? 'Already have an account? Log In' : "Don't have an account? Sign Up"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ChatWidget Component
+interface ChatWidgetProps {
+  user: User | null;
+  onLoginRequest: () => void;
+}
+const ChatWidget: React.FC<ChatWidgetProps> = ({ user, onLoginRequest }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const userTier = user ? user.tier : UserTier.GUEST;
+  
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { 
+      role: 'model', 
+      text: userTier === UserTier.GUEST 
+        ? "Hi! I'm CareerBot (Demo). I can only help with basic info until you verify your account." 
+        : "Hi! I'm CareerBot! I'm ready to help you plan your future!" 
+    }
+  ]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); };
+  useEffect(() => { scrollToBottom(); }, [messages, isOpen]);
+  useEffect(() => {
+     setMessages([{ 
+      role: 'model', 
+      text: userTier === UserTier.GUEST 
+        ? "Hi! I'm CareerBot (Demo). Sign in for full career advice!" 
+        : "Hi! I'm CareerBot! Ask me anything about your courses!" 
+    }]);
+  }, [userTier]);
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+    const userMsg: ChatMessage = { role: 'user', text: input };
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+    setLoading(true);
+    const responseText = await sendMessageToAgent(input);
+    setMessages(prev => [...prev, { role: 'model', text: responseText }]);
+    setLoading(false);
+  };
+
+  const handleToggle = () => {
+    if (!user) { onLoginRequest(); } else { setIsOpen(!isOpen); }
+  };
+
+  return (
+    <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end pointer-events-none">
+      {isOpen && user && (
+        <div className="pointer-events-auto mb-4 w-[350px] sm:w-[400px] h-[500px] bg-white rounded-2xl shadow-2xl border-2 border-green-100 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-10">
+          <div className="p-4 bg-green-500 text-white flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-lg">🤖</div>
+              <div className="flex flex-col">
+                <span className="font-bold leading-tight">CareerBot</span>
+                <span className="text-[10px] uppercase tracking-wider opacity-90">{userTier === UserTier.PAID ? 'Full Access' : 'Demo Mode'}</span>
+              </div>
+            </div>
+            <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white">✕</button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-green-50/50">
+            {messages.map((msg, idx) => (
+              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${msg.role === 'user' ? 'bg-green-600 text-white rounded-br-none' : 'bg-white text-slate-800 border border-slate-100 shadow-sm rounded-bl-none'}`}>
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+            {loading && <div className="text-xs text-slate-400 p-2">Thinking...</div>}
+            <div ref={messagesEndRef} />
+          </div>
+          <div className="p-3 bg-white border-t border-slate-100">
+            <div className="flex gap-2">
+              <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} placeholder="Ask CareerBot..." className="flex-1 px-4 py-2 bg-slate-50 border-0 rounded-full focus:ring-2 focus:ring-green-500 text-sm" />
+              <button onClick={handleSend} disabled={loading || !input.trim()} className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 disabled:opacity-50">➤</button>
+            </div>
+          </div>
+        </div>
+      )}
+      <button onClick={handleToggle} className="pointer-events-auto shadow-xl hover:shadow-2xl transition-all hover:scale-105 active:scale-95 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-bold flex items-center gap-2">
+        {isOpen && user ? <span>✕ Close</span> : <span>🤖 Chat with CareerBot</span>}
+      </button>
+    </div>
+  );
+};
+
+// -----------------------------------------------------------------------------
+// APP
+// -----------------------------------------------------------------------------
+const App = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'LOGIN' | 'SIGNUP'>('LOGIN');
+  const [preselectedInterest, setPreselectedInterest] = useState<string | undefined>(undefined);
+  
+  const [view, setView] = useState<'landing' | 'clusters_list' | 'cluster_courses' | 'course_details'>('landing');
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  
+  // Questionnaire State
+  const [showQuizResult, setShowQuizResult] = useState(false);
+  const [quizResult, setQuizResult] = useState<Course | null>(null);
+  const [quizActive, setQuizActive] = useState(false);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [quizScores, setQuizScores] = useState<Record<string, number>>({});
+  
+  const [userCount, setUserCount] = useState(9044284);
+
+  const questions = [
+    {
+      text: "When you visualize your ideal workday, what are you doing?",
+      options: [
+        { text: "Building structure & organizing chaos", tags: ['Business', 'Logic', 'Structure', 'Management', 'Finance'] },
+        { text: "Connecting with & leading people", tags: ['Leadership', 'People', 'Service', 'Society', 'Talk'] },
+        { text: "Creating something visual or auditory", tags: ['Art', 'Design', 'Creative', 'Media', 'Audio', 'Music'] }
+      ]
+    },
+    {
+      text: "How do you prefer to solve complex problems?",
+      options: [
+        { text: "Analyze data and follow the facts", tags: ['Math', 'Coding', 'Research', 'Science', 'Security'] },
+        { text: "Collaborate and brainstorm with a team", tags: ['Therapy', 'Teams', 'Events', 'Food'] },
+        { text: "Experiment until something works", tags: ['Startup', 'Instrument', 'Photo', 'Cafe'] }
+      ]
+    },
+    {
+      text: "Which of these feels like a superpower you want?",
+      options: [
+        { text: "Unshakeable Stability & Wealth", tags: ['Money', 'Security', 'Business'] },
+        { text: "Healing & Helping Others", tags: ['Health', 'Medical', 'Service', 'Teaching', 'Kids'] },
+        { text: "Unbounded Expression", tags: ['Video', 'Voice', 'Singing', '3D', 'Web'] }
+      ]
+    }
+  ];
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setUser({
+          id: session.user.id,
+          name: session.user.user_metadata.username || session.user.email?.split('@')[0] || 'User',
+          tier: session.user.user_metadata.tier === 'PAID' ? UserTier.PAID : UserTier.GUEST,
+          interest: session.user.user_metadata.interest
+        });
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setUser({
+          id: session.user.id,
+          name: session.user.user_metadata.username || session.user.email?.split('@')[0] || 'User',
+          tier: session.user.user_metadata.tier === 'PAID' ? UserTier.PAID : UserTier.GUEST,
+          interest: session.user.user_metadata.interest
+        });
+        setShowLoginModal(false);
+        setPreselectedInterest(undefined);
+      } else {
+        setUser(null);
+        setView('landing');
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const tier = user ? user.tier : UserTier.GUEST;
+    const interest = user?.interest;
+    initializeChat(tier, interest);
+  }, [user]);
+
+  useEffect(() => {
+    const interval = setInterval(() => { setUserCount(prev => prev + Math.floor(Math.random() * 15) + 5); }, 1500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const openAuthModal = (mode: 'LOGIN' | 'SIGNUP', interestToSelect?: string) => {
+    setAuthMode(mode);
+    if (interestToSelect) setPreselectedInterest(interestToSelect); else setPreselectedInterest(undefined);
+    setShowLoginModal(true);
+  };
+
+  const handleLogout = async () => { await supabase.auth.signOut(); };
+  const goHome = () => { setView('landing'); setSelectedCategory(null); resetQuiz(); };
+  const goToClusters = () => { setView('clusters_list'); setSelectedCategory(null); resetQuiz(); };
+  const openCluster = (category: Category) => { setSelectedCategory(category); setView('cluster_courses'); resetQuiz(); };
+  const openCourse = (course: Course) => { setSelectedCourse(course); setView('course_details'); };
+
+  const resetQuiz = () => { setShowQuizResult(false); setQuizResult(null); setQuizActive(false); setCurrentQuestion(0); setQuizScores({}); };
+  const startQuiz = () => { resetQuiz(); setQuizActive(true); };
+
+  const handleQuizAnswer = (tags: string[]) => {
+    const newScores = { ...quizScores };
+    tags.forEach(tag => { newScores[tag] = (newScores[tag] || 0) + 1; });
+    setQuizScores(newScores);
+    if (currentQuestion < questions.length - 1) { setCurrentQuestion(prev => prev + 1); } else { finishQuiz(newScores); }
+  };
+
+  const finishQuiz = (finalScores: Record<string, number>) => {
+    if (!selectedCategory) return;
+    let bestCourse = selectedCategory.courses[0];
+    let maxScore = -1;
+    selectedCategory.courses.forEach(course => {
+      let courseScore = 0;
+      course.tags.forEach(tag => {
+        if (finalScores[tag]) courseScore += finalScores[tag] * 2;
+        Object.keys(finalScores).forEach(scoreTag => {
+           if (tag.includes(scoreTag) || scoreTag.includes(tag)) courseScore += 0.5;
+        });
+      });
+      courseScore += Math.random();
+      if (courseScore > maxScore) { maxScore = courseScore; bestCourse = course; }
+    });
+    setQuizResult(bestCourse);
+    setQuizActive(false);
+    setShowQuizResult(true);
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col bg-green-50 font-sans text-slate-800">
+      {/* Header */}
+      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-green-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={goHome}>
+            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg transform hover:rotate-6 transition-transform">C</div>
+            <span className="font-bold text-green-800 text-xl hidden sm:block">CareerFinder</span>
+          </div>
+          <nav className="hidden md:flex gap-10 text-base font-bold text-slate-500">
+            <button onClick={goHome} className={`hover:text-green-600 transition-colors ${view === 'landing' ? 'text-green-600' : ''}`}>Home</button>
+            <button onClick={goToClusters} className={`hover:text-green-600 transition-colors ${view === 'clusters_list' || view === 'cluster_courses' ? 'text-green-600' : ''}`}>Course Groups</button>
+          </nav>
+          <div className="flex items-center gap-4">
+            {user ? (
+              <div className="flex items-center gap-4">
+                 <div className="flex flex-col items-end">
+                    <span className="text-sm font-bold text-green-900">{user.name}</span>
+                    <div className="flex items-center gap-1">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${user.tier === UserTier.PAID ? 'bg-orange-100 text-orange-700' : 'bg-slate-200 text-slate-600'}`}>{user.tier === UserTier.PAID ? 'Premium' : 'Guest'}</span>
+                      {user.interest && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 max-w-[100px] truncate">{user.interest}</span>}
+                    </div>
+                 </div>
+                 <Button variant="outline" size="sm" onClick={handleLogout}>Sign Out</Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => openAuthModal('LOGIN')}>Log In</Button>
+                <Button onClick={() => openAuthModal('SIGNUP')}>Sign Up</Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Main */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {view === 'landing' && (
+          <div className="flex flex-col items-center justify-center py-10 animate-in fade-in duration-700">
+            <div className="text-center max-w-4xl mx-auto mb-16">
+              <span className="inline-block py-1 px-3 rounded-full bg-orange-100 text-orange-600 text-sm font-bold mb-6">✨ Find Your Dream Job</span>
+              <h1 className="text-5xl md:text-7xl font-extrabold text-green-900 tracking-tight mb-8 leading-snug pb-2">
+                Learn what you <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-400">Love</span>.<br/>
+                Do what makes you <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-500">Happy</span>.
+              </h1>
+              <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
+                Welcome to CareerFinder! We have organized all knowledge into convenient <strong>Course Groups</strong> to help you find your path easily.
+                <br/>Our <strong className="text-slate-800">CareerBot</strong> is waiting to help you!
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button size="lg" onClick={goToClusters}>Browse Course Groups</Button>
+              </div>
+            </div>
+            <div className="w-full max-w-3xl mx-auto mb-12 bg-red-600 text-white p-4 rounded-lg shadow-xl border-4 border-yellow-400 animate-pulse text-center">
+              <p className="font-black text-lg md:text-xl uppercase tracking-widest">⚠ WARNING: GUESSING YOUR FUTURE IS RISKY. MOST PEOPLE FAIL. DON'T RISK IT. ⚠</p>
+            </div>
+            <div className="bg-orange-400 -rotate-2 rounded-xl p-6 shadow-xl mb-12 max-w-md mx-auto transform hover:rotate-0 transition-transform cursor-default">
+              <div className="text-center text-white font-black text-2xl tracking-wide uppercase drop-shadow-md">CareerFinder is the best,<br/>Put your future to the test!</div>
+            </div>
+            <div className="text-center mb-16">
+               <div className="inline-block bg-slate-800 p-8 rounded-3xl shadow-2xl border-b-8 border-slate-600">
+                  <div className="text-5xl md:text-7xl font-black text-green-400 tabular-nums font-mono mb-2">{userCount.toLocaleString()}</div>
+                  <div className="text-white font-bold uppercase tracking-[0.1em] text-sm">Happy Users Let Us Choose For Them</div>
+                  <div className="text-slate-400 text-xs mt-2 italic">Everyone else is doing it. Don't be the only one left out.</div>
+               </div>
+            </div>
+            <div className="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+               <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-xl text-white transform hover:scale-105 transition-transform">
+                 <div className="text-4xl mb-4">👑</div>
+                 <h3 className="text-xl font-extrabold mb-2">The Real Truth</h3>
+                 <p className="text-green-100 text-sm">Opinions are weak. Data is <strong>king</strong>. Trust the math completely.</p>
+               </div>
+               <div className="bg-gradient-to-br from-orange-400 to-amber-500 p-6 rounded-2xl shadow-xl text-white transform hover:scale-105 transition-transform delay-75">
+                 <div className="text-4xl mb-4">🚀</div>
+                 <h3 className="text-xl font-extrabold mb-2">Big Win</h3>
+                 <p className="text-orange-100 text-sm">Don't be a <strong>loser</strong>. Join the <strong>winning team</strong> of successful people.</p>
+               </div>
+               <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-6 rounded-2xl shadow-xl text-white transform hover:scale-105 transition-transform delay-150">
+                 <div className="text-4xl mb-4">🧠</div>
+                 <h3 className="text-xl font-extrabold mb-2">Get Smart Fast</h3>
+                 <p className="text-blue-100 text-sm">Hard work is for others. Get <strong>smart</strong> without the pain of thinking.</p>
+               </div>
+            </div>
+            <div className="max-w-4xl mx-auto mt-16 mb-16 px-4">
+              <h2 className="text-3xl font-bold text-center text-green-900 mb-8">Trusted by Famous People</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-blue-500 transform hover:-translate-y-1 transition-transform">
+                    <p className="italic text-slate-600 mb-4 text-lg">"I wish I had this when I started. It is the only way to be the best you can be. Don't go to space without it."</p>
+                    <div className="font-bold text-slate-900 flex items-center gap-2"><div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs">🚀</div>Elon M., Tech Leader</div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-pink-500 transform hover:-translate-y-1 transition-transform">
+                    <p className="italic text-slate-600 mb-4 text-lg">"I was scared by too many choices until CareerFinder told me who to be. It looked at who I am and gave me a plan. Now I don't have to worry about my future."</p>
+                    <div className="font-bold text-slate-900 flex items-center gap-2"><div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs">🎤</div>Taylor S., Pop Star</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {view === 'clusters_list' && (
+           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+             <div className="text-center mb-12">
+               <h2 className="text-3xl font-bold text-green-900 mb-2">Course Groups</h2>
+               <p className="text-slate-500">Select a group to view available courses</p>
+             </div>
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {CATEGORIES.map((category) => (
+                   <div key={category.id} onClick={() => openCluster(category)} className="cursor-pointer group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-white">
+                     <div className="h-48 overflow-hidden relative">
+                        <div className="absolute inset-0 bg-slate-200 animate-pulse"></div>
+                        <img src={category.courses[0]?.image} alt={category.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                        <div className="absolute bottom-4 left-4 text-white">
+                           <h3 className="text-xl font-bold mb-1">{category.title}</h3>
+                           <p className="text-xs font-medium text-white/80">{category.courses.length} Courses Available</p>
+                        </div>
+                     </div>
+                   </div>
+                ))}
+             </div>
+           </div>
+        )}
+        {view === 'cluster_courses' && selectedCategory && (
+          <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+             <button onClick={goToClusters} className="mb-6 flex items-center text-slate-500 hover:text-green-600 transition font-medium">Back to Groups</button>
+             <div className="flex flex-col md:flex-row justify-between items-end mb-8 border-b border-green-200 pb-4 gap-4">
+                <div>
+                  <h2 className="text-3xl font-bold text-green-900">{selectedCategory.title}</h2>
+                  <p className="text-slate-500 text-sm mt-1">Explore the available paths below</p>
+                </div>
+                {!quizActive && !showQuizResult && <Button variant="secondary" onClick={startQuiz} className="animate-bounce hover:animate-none">⚡ Not sure? Find Your Match!</Button>}
+             </div>
+             {quizActive && (
+               <div className="mb-8 p-8 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-3xl border border-indigo-200 shadow-xl animate-in zoom-in-95">
+                 <div className="max-w-2xl mx-auto text-center">
+                    <span className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-4 block">Question {currentQuestion + 1} of {questions.length}</span>
+                    <h3 className="text-2xl font-bold text-slate-800 mb-8">{questions[currentQuestion].text}</h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      {questions[currentQuestion].options.map((option, idx) => (
+                        <button key={idx} onClick={() => handleQuizAnswer(option.tags)} className="p-4 bg-white rounded-xl border-2 border-transparent hover:border-indigo-400 hover:shadow-md transition-all text-left group">
+                          <span className="font-medium text-slate-700 group-hover:text-indigo-700">{option.text}</span>
+                        </button>
+                      ))}
+                    </div>
+                 </div>
+               </div>
+             )}
+             {showQuizResult && quizResult && (
+               <div className="mb-8 p-6 bg-gradient-to-r from-orange-100 to-orange-200 rounded-2xl border-2 border-orange-300 animate-in zoom-in shadow-xl relative">
+                 <button onClick={resetQuiz} className="absolute top-4 right-4 text-orange-400 hover:text-orange-600">✕</button>
+                 <div className="flex flex-col md:flex-row gap-6 items-center">
+                   <div className="flex-1 text-center md:text-left">
+                     <div className="inline-block bg-white text-orange-600 font-bold px-3 py-1 rounded-full text-xs mb-2 shadow-sm">🎯 Recommended for You</div>
+                     <h3 className="text-2xl font-bold text-slate-800 mb-2">Based on your personality, try: {quizResult.title}</h3>
+                     <p className="text-slate-700 mb-4">{quizResult.description}</p>
+                     <Button onClick={() => openCourse(quizResult!)} className="bg-slate-900 text-white hover:bg-slate-700">View This Course</Button>
+                   </div>
+                   <div className="w-full md:w-1/3 h-40 rounded-xl overflow-hidden shadow-lg"><img src={quizResult.image} alt={quizResult.title} className="w-full h-full object-cover" /></div>
+                 </div>
+               </div>
+             )}
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {selectedCategory.courses.map((course) => (
+                  <div key={course.id} className="group bg-white rounded-2xl border-2 border-transparent hover:border-green-200 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full overflow-hidden transform hover:-translate-y-1">
+                    <div className="h-48 overflow-hidden relative">
+                       <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                       <div className="absolute top-3 right-3 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-green-900 shadow-md">${course.price}</div>
+                    </div>
+                    <div className="p-6 flex-1 flex flex-col">
+                      <div className="flex gap-2 mb-4">
+                        {course.tags.map(tag => <span key={tag} className="text-[10px] uppercase tracking-wider font-bold bg-green-50 text-green-600 px-2 py-1 rounded-md">{tag}</span>)}
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-800 mb-3 group-hover:text-green-600 transition-colors">{course.title}</h3>
+                      <p className="text-sm text-slate-500 mb-6 line-clamp-2 flex-1 leading-relaxed">{course.description}</p>
+                      <Button variant="primary" className="w-full mt-auto" onClick={() => openCourse(course)}>Explore Path</Button>
+                    </div>
+                  </div>
+                ))}
+             </div>
+          </div>
+        )}
+        {view === 'course_details' && selectedCourse && (
+          <div className="animate-in fade-in zoom-in-95 duration-300">
+            <button onClick={() => setView('cluster_courses')} className="mb-6 flex items-center text-slate-500 hover:text-green-600 transition font-medium">Back to {selectedCategory?.title || 'Group'}</button>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <div className="relative h-64 md:h-96 rounded-3xl overflow-hidden mb-8 shadow-2xl">
+                  <img src={selectedCourse.image} alt={selectedCourse.title} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-green-900/80 via-transparent to-transparent flex items-end p-8">
+                    <div>
+                      {selectedCourse.tags.includes('General') && <span className="inline-block py-1 px-3 bg-orange-500 text-white text-xs font-bold rounded-full mb-3">Recommended First Step</span>}
+                      <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{selectedCourse.title}</h1>
+                    </div>
+                  </div>
+                </div>
+                <div className="prose prose-lg prose-green max-w-none">
+                  <h3 className="text-green-800">What you will learn</h3>
+                  <p className="text-slate-600 leading-relaxed">{selectedCourse.description}</p>
+                  <div className={`my-10 p-8 rounded-3xl border-2 relative overflow-hidden ${user?.tier === UserTier.PAID ? 'bg-green-50 border-green-200' : 'bg-white border-slate-100 shadow-xl'}`}>
+                    {user?.tier === UserTier.PAID ? (
+                       <div>
+                         <h4 className="text-green-700 font-bold mb-4 flex items-center text-xl"><span className="bg-green-200 p-1 rounded-full mr-3">✅</span>Full Access Unlocked</h4>
+                         <p className="text-slate-600 mb-4">You have unlocked the complete curriculum! Ask CareerBot about specific assignments and reading materials.</p>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {[1,2,3,4,5].map(i => <div key={i} className="bg-white p-4 rounded-xl border border-green-100 flex items-center"><span className="w-8 h-8 bg-green-100 text-green-600 rounded-lg flex items-center justify-center font-bold mr-3">{i}</span><span className="font-medium text-slate-700">Module {i}: Advanced Topics</span></div>)}
+                         </div>
+                       </div>
+                    ) : (
+                      <div className="text-left">
+                         <div className="flex items-center gap-3 mb-6">
+                            <div className="w-12 h-12 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center text-xl">🔒</div>
+                            <div><h3 className="text-xl font-bold text-slate-800">Course Content</h3><p className="text-slate-500 text-sm">Sign up to unlock the full course</p></div>
+                         </div>
+                        <div className="space-y-3 mb-8">
+                           <div className="bg-green-50 p-4 rounded-xl border border-green-200 flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <span className="w-8 h-8 bg-green-200 text-green-800 rounded-lg flex items-center justify-center font-bold text-sm">1</span>
+                                <div><span className="font-bold text-slate-800 block">Module 1: Introduction</span><span className="text-xs text-green-600 font-bold uppercase tracking-wide">Free Demo Access</span></div>
+                              </div>
+                              <Button size="sm" variant="ghost">Start</Button>
+                           </div>
+                           {[2,3,4,5].map(i => <div key={i} className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center justify-between opacity-60"><div className="flex items-center gap-3"><span className="w-8 h-8 bg-slate-200 text-slate-500 rounded-lg flex items-center justify-center font-bold text-sm">{i}</span><span className="font-medium text-slate-500">Module {i}: Advanced Concepts</span></div><span className="text-slate-400 text-lg">🔒</span></div>)}
+                        </div>
+                        <div className="bg-orange-50 p-6 rounded-2xl text-center border border-orange-100">
+                          <p className="text-slate-800 font-bold mb-2">Want to learn more?</p>
+                          <p className="text-slate-600 text-sm mb-4">Get full access to this course plus 1 more of your choice!</p>
+                          <Button size="lg" className="w-full shadow-orange-200" variant="secondary" onClick={() => openAuthModal('SIGNUP', selectedCategory?.title)}>Unlock 2 Courses for $10</Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="lg:col-span-1">
+                 <div className="bg-white p-8 rounded-3xl border-2 border-slate-100 sticky top-24 shadow-lg">
+                    <h3 className="font-bold text-xl text-slate-800 mb-6">Course Summary</h3>
+                    <div className="space-y-4 mb-8">
+                       <div className="flex items-center gap-3 text-slate-600"><div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600">⏱️</div><div><p className="text-xs font-bold uppercase text-slate-400">Duration</p><p className="font-medium">4 - 8 Weeks</p></div></div>
+                       <div className="flex items-center gap-3 text-slate-600"><div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600">🎓</div><div><p className="text-xs font-bold uppercase text-slate-400">Certificate</p><p className="font-medium">Included</p></div></div>
+                    </div>
+                    <div className="pt-6 border-t border-slate-100">
+                      {!user || user.tier === UserTier.GUEST ? (
+                        <Button className="w-full text-lg shadow-green-200" onClick={() => openAuthModal('SIGNUP', selectedCategory?.title)}>Start Learning Now</Button>
+                      ) : (
+                        <Button className="w-full" variant="outline" disabled>✅ Already Enrolled</Button>
+                      )}
+                      <p className="text-center text-xs text-slate-400 mt-4">30-Day Money Back Guarantee</p>
+                    </div>
+                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+
+      <ChatWidget user={user} onLoginRequest={() => openAuthModal('SIGNUP')} />
+      <Modal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} initialMode={authMode} preselectedInterest={preselectedInterest} />
+    </div>
+  );
+};
+
+const rootElement = document.getElementById('root');
+if (rootElement) {
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(<React.StrictMode><App /></React.StrictMode>);
+}
+    </script>
+  </body>
+</html>

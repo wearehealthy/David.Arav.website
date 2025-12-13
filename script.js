@@ -678,6 +678,18 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
                   </div>
                   <div className="font-bold text-orange-600 bg-white px-3 py-1 rounded-lg shadow-sm">$5.00</div>
                 </button>
+
+                {/* PLAN 3: GUEST/DEMO */}
+                <button 
+                  onClick={() => handlePlanSelect('GUEST')}
+                  className="w-full flex items-center justify-between p-5 border-2 border-slate-200 bg-slate-50 rounded-xl hover:border-slate-400 hover:bg-slate-100 transition shadow-sm group"
+                >
+                  <div className="text-left">
+                    <div className="font-bold text-slate-700 group-hover:text-slate-900">Demo Access</div>
+                    <div className="text-xs text-slate-500">Limited Preview</div>
+                  </div>
+                  <div className="font-bold text-slate-600 bg-white px-3 py-1 rounded-lg shadow-sm">Free</div>
+                </button>
               </div>
 
               <div className="text-center pt-2">
@@ -690,8 +702,16 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode === 'SIGNUP' && (
                 <div className="text-center mb-6">
-                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${selectedTier === 'BUNDLE' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
-                    Selected: {selectedTier === 'BUNDLE' ? 'Complete Bundle ($20)' : 'Single Course ($5)'}
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                      selectedTier === 'BUNDLE' ? 'bg-green-100 text-green-600' : 
+                      selectedTier === 'SINGLE' ? 'bg-orange-100 text-orange-600' : 
+                      'bg-slate-100 text-slate-600'
+                    }`}>
+                    Selected: {
+                        selectedTier === 'BUNDLE' ? 'Complete Bundle ($20)' : 
+                        selectedTier === 'SINGLE' ? 'Single Course ($5)' : 
+                        'Demo Mode (Free)'
+                    }
                   </span>
                 </div>
               )}

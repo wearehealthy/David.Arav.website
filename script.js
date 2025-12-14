@@ -586,14 +586,8 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
         if (signUpError) {
              throw signUpError;
         }
-
-        // --- ONLINE MODE EXPLANATION ---
-        // If data.user exists but data.session is null, it means 'Email Confirm' is ON in Supabase
-        if (data.user && !data.session) {
-            alert(`Account created! \n\nIMPORTANT: You cannot log in yet because Supabase sent a verification email to '${generatedEmail}', which is a fake email.\n\nTO FIX THIS: Go to your Supabase Dashboard -> Authentication -> Providers -> Email -> Turn OFF "Confirm email". Then try logging in.`);
-            return;
-        }
         
+        // Success - Close modal
         onClose();
 
       } else {

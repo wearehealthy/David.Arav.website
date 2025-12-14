@@ -10,8 +10,8 @@ import { createClient } from '@supabase/supabase-js';
 // YOUR PROVIDED API KEY
 const GEMINI_API_KEY = "AIzaSyADwJbM9vyTIBGjsYkSAhRbN4pR_qUgJy0"; 
 
-const supabaseUrl = 'https://iildoyyezcqvlcxvohvh.supabase.co';
-const supabaseKey = 'sb_publishable_BXdW8AdxKXIpMfbMwyyZ_A_Ejd2PpPk';
+const supabaseUrl = 'https://bwjjfnkuqnravvfytxbf.supabase.co';
+const supabaseKey = 'sb_publishable_9z5mRwy-X0zERNX7twZzPw_RdskfL8s';
 
 // ==========================================
 // 1. DATA & CONSTANTS
@@ -27,7 +27,7 @@ const CATEGORIES = [
         id: 'rest-001',
         title: 'Open Your Own Restaurant',
         description: 'A step-by-step guide to location, menu, and hiring.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=640&q=80',
         tags: ['Business', 'Food']
       },
@@ -35,7 +35,7 @@ const CATEGORIES = [
         id: 'rest-002',
         title: 'Head Chef Training',
         description: 'Managing a high-pressure kitchen environment.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1583394293214-28ded15ee548?auto=format&fit=crop&w=640&q=80',
         tags: ['Cooking', 'Leadership']
       },
@@ -43,7 +43,7 @@ const CATEGORIES = [
         id: 'rest-003',
         title: 'Coffee Shop Culture',
         description: 'Barista skills and roasting your own beans.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=640&q=80',
         tags: ['Drinks', 'Cafe']
       },
@@ -51,7 +51,7 @@ const CATEGORIES = [
         id: 'rest-004',
         title: 'Artisan Bakery',
         description: 'Mastering sourdough, pastries, and running a bakery.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=640&q=80',
         tags: ['Baking', 'Business']
       },
@@ -59,7 +59,7 @@ const CATEGORIES = [
         id: 'rest-005',
         title: 'Food Truck Revolution',
         description: 'Mobile food business basics.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?auto=format&fit=crop&w=640&q=80',
         tags: ['Startup', 'Food']
       }
@@ -74,7 +74,7 @@ const CATEGORIES = [
         id: 'pod-001',
         title: 'Start Your Podcast',
         description: 'From buying a mic to publishing on Spotify. Your voice matters.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1589903308904-1010c2294adc?auto=format&fit=crop&w=640&q=80',
         tags: ['Media', 'Audio']
       },
@@ -82,7 +82,7 @@ const CATEGORIES = [
         id: 'pod-002',
         title: 'Viral Content Creation',
         description: 'How to make short clips that get millions of views.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=640&q=80',
         tags: ['Social', 'Video']
       },
@@ -90,7 +90,7 @@ const CATEGORIES = [
         id: 'pod-003',
         title: 'Streamer Setup 101',
         description: 'Lighting, OBS, and engaging your chat live.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=640&q=80',
         tags: ['Live', 'Tech']
       },
@@ -98,7 +98,7 @@ const CATEGORIES = [
         id: 'pod-004',
         title: 'Interview Techniques',
         description: 'How to talk to guests and get great stories.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=640&q=80',
         tags: ['Skills', 'Talk']
       },
@@ -106,7 +106,7 @@ const CATEGORIES = [
         id: 'pod-005',
         title: 'Monetize Your Brand',
         description: 'Sponsorships, merch, and making money online.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=640&q=80',
         tags: ['Business', 'Money']
       }
@@ -121,7 +121,7 @@ const CATEGORIES = [
         id: 'cs-000',
         title: 'General Overview: The Digital World',
         description: 'Not sure which tech path to take? This course surveys everything from code to hardware to help you decide.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=640&q=80',
         tags: ['General', 'Overview']
       },
@@ -129,7 +129,7 @@ const CATEGORIES = [
         id: 'cs-101',
         title: 'Introduction to Algorithms',
         description: 'Learn the fundamentals of sorting, searching, and graph algorithms.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&w=640&q=80',
         tags: ['Coding', 'Logic']
       },
@@ -137,7 +137,7 @@ const CATEGORIES = [
         id: 'cs-202',
         title: 'AI & Machine Learning',
         description: 'Understand neural networks and how to build intelligent agents.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=640&q=80',
         tags: ['AI', 'Python']
       },
@@ -145,7 +145,7 @@ const CATEGORIES = [
         id: 'cs-303',
         title: 'Cybersecurity Basics',
         description: 'Protect systems from attacks and understand encryption.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=640&q=80',
         tags: ['Security', 'Network']
       },
@@ -153,7 +153,7 @@ const CATEGORIES = [
         id: 'cs-404',
         title: 'Full Stack Web Dev',
         description: 'Build complete websites from database to user interface.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1547658719-da2b51169166?auto=format&fit=crop&w=640&q=80',
         tags: ['Web', 'Design']
       }
@@ -168,7 +168,7 @@ const CATEGORIES = [
         id: 'bus-000',
         title: 'General Overview: Corporate World',
         description: 'Learn the language of money and management before diving deep.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=640&q=80',
         tags: ['General', 'Money']
       },
@@ -176,7 +176,7 @@ const CATEGORIES = [
         id: 'bus-101',
         title: 'Marketing Strategy',
         description: 'Master the 4 Ps of marketing and digital outreach.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1533750516457-a7f992034fec?auto=format&fit=crop&w=640&q=80',
         tags: ['Marketing', 'Strategy']
       },
@@ -184,7 +184,7 @@ const CATEGORIES = [
         id: 'bus-303',
         title: 'Financial Accounting',
         description: 'Read balance sheets and manage corporate finances effectively.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1554224155-98406858d0ade?auto=format&fit=crop&w=640&q=80',
         tags: ['Finance', 'Math']
       },
@@ -192,7 +192,7 @@ const CATEGORIES = [
         id: 'bus-404',
         title: 'Entrepreneurship',
         description: 'How to start a business from scratch and not fail immediately.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=640&q=80',
         tags: ['Startup', 'Leadership']
       },
@@ -200,7 +200,7 @@ const CATEGORIES = [
         id: 'bus-505',
         title: 'Project Management',
         description: 'Agile methodologies and leading teams to success.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=640&q=80',
         tags: ['Management', 'Teams']
       }
@@ -215,7 +215,7 @@ const CATEGORIES = [
         id: 'bio-000',
         title: 'General Overview: Study of Life',
         description: 'A broad look at all living things to help you pick between plants, animals, or humans.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=640&q=80',
         tags: ['General', 'Science']
       },
@@ -223,7 +223,7 @@ const CATEGORIES = [
         id: 'bio-101',
         title: 'Cellular Biology',
         description: 'The building blocks of life: structure and function of cells.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&w=640&q=80',
         tags: ['Science', 'Lab']
       },
@@ -231,7 +231,7 @@ const CATEGORIES = [
         id: 'bio-202',
         title: 'Genetics',
         description: 'Understanding DNA, heredity, and gene mapping.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1530210124550-912dc1381cb8?auto=format&fit=crop&w=640&q=80',
         tags: ['DNA', 'Research']
       },
@@ -239,7 +239,7 @@ const CATEGORIES = [
         id: 'bio-303',
         title: 'Marine Biology',
         description: 'Explore the depths of the ocean and marine ecosystems.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=640&q=80',
         tags: ['Ocean', 'Animals']
       },
@@ -247,7 +247,7 @@ const CATEGORIES = [
         id: 'bio-404',
         title: 'Human Anatomy',
         description: 'Detailed study of the human body structure and systems.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&w=640&q=80',
         tags: ['Health', 'Medical']
       }
@@ -262,7 +262,7 @@ const CATEGORIES = [
         id: 'psy-000',
         title: 'General Overview: The Human Mind',
         description: 'Why do we think? An overview of behavioral science.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1555819206-7b30da4f1506?auto=format&fit=crop&w=640&q=80',
         tags: ['General', 'Mind']
       },
@@ -270,7 +270,7 @@ const CATEGORIES = [
         id: 'psy-101',
         title: 'Cognitive Psychology',
         description: 'Memory, perception, and problem solving.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=640&q=80',
         tags: ['Brain', 'Thought']
       },
@@ -278,7 +278,7 @@ const CATEGORIES = [
         id: 'psy-202',
         title: 'Child Development',
         description: 'How humans grow from infancy to adolescence.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1485546246426-74dc88dec4d9?auto=format&fit=crop&w=640&q=80',
         tags: ['Kids', 'Growth']
       },
@@ -286,7 +286,7 @@ const CATEGORIES = [
         id: 'psy-303',
         title: 'Clinical Psychology',
         description: 'Diagnosing and treating mental health disorders.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=640&q=80',
         tags: ['Health', 'Therapy']
       },
@@ -294,7 +294,7 @@ const CATEGORIES = [
         id: 'psy-404',
         title: 'Social Psychology',
         description: 'How groups influence individual behavior.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=640&q=80',
         tags: ['Society', 'People']
       }
@@ -309,7 +309,7 @@ const CATEGORIES = [
         id: 'art-000',
         title: 'General Overview: Unleashing Creativity',
         description: 'Try a little bit of everything to find your medium.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=640&q=80',
         tags: ['General', 'Art']
       },
@@ -317,7 +317,7 @@ const CATEGORIES = [
         id: 'art-001',
         title: 'Digital Painting',
         description: 'From sketching to final rendering using digital tools.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1515462277126-2dd0c162007a?auto=format&fit=crop&w=640&q=80',
         tags: ['Design', 'Creative']
       },
@@ -325,7 +325,7 @@ const CATEGORIES = [
         id: 'art-002',
         title: 'Photography 101',
         description: 'Mastering composition and lighting for stunning photos.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=640&q=80',
         tags: ['Photo', 'Camera']
       },
@@ -333,7 +333,7 @@ const CATEGORIES = [
         id: 'art-003',
         title: 'Sculpting Basics',
         description: 'Working with clay and 3D forms.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?auto=format&fit=crop&w=640&q=80',
         tags: ['3D', 'Clay']
       },
@@ -341,7 +341,7 @@ const CATEGORIES = [
         id: 'art-004',
         title: 'Art History',
         description: 'From Renaissance to Modernism.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1518998053901-5348d3969105?auto=format&fit=crop&w=640&q=80',
         tags: ['History', 'Culture']
       }
@@ -356,7 +356,7 @@ const CATEGORIES = [
         id: 'mus-000',
         title: 'General Overview: Sound & Theory',
         description: 'Understanding rhythm, melody, and how music works.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=640&q=80',
         tags: ['General', 'Sound']
       },
@@ -364,7 +364,7 @@ const CATEGORIES = [
         id: 'mus-001',
         title: 'Beat Making Basics',
         description: 'Create your first track using standard DAWs.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=640&q=80',
         tags: ['Audio', 'Creative']
       },
@@ -372,7 +372,7 @@ const CATEGORIES = [
         id: 'mus-002',
         title: 'Guitar for Beginners',
         description: 'Chords, strumming patterns, and basic songs.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&w=640&q=80',
         tags: ['Instrument', 'Strings']
       },
@@ -380,7 +380,7 @@ const CATEGORIES = [
         id: 'mus-003',
         title: 'Piano Fundamentals',
         description: 'Reading sheet music and playing keys.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?auto=format&fit=crop&w=640&q=80',
         tags: ['Instrument', 'Keys']
       },
@@ -388,7 +388,7 @@ const CATEGORIES = [
         id: 'mus-004',
         title: 'Vocal Training',
         description: 'Improve your singing voice and range.',
-        price: 5,
+        price: 1,
         image: 'https://images.unsplash.com/photo-1516280440614-6697288d5d38?auto=format&fit=crop&w=640&q=80',
         tags: ['Voice', 'Singing']
       }
@@ -664,7 +664,7 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
                     <div className="font-bold text-green-900 text-lg group-hover:text-green-700">Course Bundle</div>
                     <div className="text-xs text-green-700 font-medium">Access All 5 Courses + AI Tutor</div>
                   </div>
-                  <div className="font-bold text-green-700 bg-white px-3 py-1 rounded-lg shadow-sm">$20.00</div>
+                  <div className="font-bold text-green-700 bg-white px-3 py-1 rounded-lg shadow-sm">$5.00</div>
                 </button>
 
                 {/* PLAN 2: SINGLE */}
@@ -676,7 +676,7 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
                     <div className="font-bold text-slate-800 group-hover:text-orange-900">Single Course</div>
                     <div className="text-xs text-slate-500 group-hover:text-orange-800">Access Only One Course</div>
                   </div>
-                  <div className="font-bold text-orange-600 bg-white px-3 py-1 rounded-lg shadow-sm">$5.00</div>
+                  <div className="font-bold text-orange-600 bg-white px-3 py-1 rounded-lg shadow-sm">$1.00</div>
                 </button>
 
                 {/* PLAN 3: GUEST/DEMO */}
@@ -708,8 +708,8 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
                       'bg-slate-100 text-slate-600'
                     }`}>
                     Selected: {
-                        selectedTier === 'BUNDLE' ? 'Complete Bundle ($20)' : 
-                        selectedTier === 'SINGLE' ? 'Single Course ($5)' : 
+                        selectedTier === 'BUNDLE' ? 'Complete Bundle ($5)' : 
+                        selectedTier === 'SINGLE' ? 'Single Course ($1)' : 
                         'Demo Mode (Free)'
                     }
                   </span>

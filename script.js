@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
@@ -434,22 +434,25 @@ const initializeChat = (tier, interest) => {
         `- Course Title: "${c.title}"\n  Description: ${c.description}\n  Topics/Tags: ${c.tags.join(', ')}`
       ).join('\n\n');
 
-      systemInstruction = `You are CareerBot, an expert academic advisor and tutor specifically for the "${interest}" career path.
+      // TUNED AI PERSONA FOR SCHOOL PROJECT
+      systemInstruction = `You are CareerBot, a friendly and expert academic advisor.
       
-      You have full access to the student's paid curriculum. Here are the courses they have purchased:
+      You have access to the user's specific curriculum for "${interest}". 
       
+      CURRICULUM DATA:
       ${curriculum}
       
-      YOUR RESPONSIBILITIES:
-      1. You are a tutor. If the student says a course "doesn't make sense", explain the concepts related to that course's title and description in simple terms.
-      2. Use your broader knowledge of ${interest} to fill in the gaps. Even if the description is short, you know what these topics entail.
-      3. Be encouraging, bright, and helpful.
-      4. If the student asks about a different field (e.g. they bought "Cooking" but ask about "Coding"), politely remind them their subscription covers ${interest}, but answer briefly if it's general advice.`;
+      YOUR ROLE:
+      1. Explain concepts from the courses above simply.
+      2. If the user is in "Learning Mode" (viewing a module), help them understand specific terms from that module.
+      3. Be encouraging and use emojis occasionally to keep the vibe positive 🎓 ✨.
+      4. If asked about a topic NOT in the list above, politely steer them back to their chosen path: "${interest}".
+      `;
     } else {
-        systemInstruction = "You are CareerBot. You are a helpful AI tutor. The user has a premium account but the specific course data could not be loaded. Help them with general career advice.";
+        systemInstruction = "You are CareerBot. You are a helpful AI tutor. The user has a premium account. Help them with general career advice.";
     }
   } else {
-    systemInstruction = "You are CareerBot (Demo Mode). You are restricted. You can ONLY answer general questions about why education is important in 1 short sentence. If the user asks about specific course content, exam details, or career advice, you must say: 'I cannot access that information in Demo Mode. Please sign in and purchase the course.' Do not hallucinate course details.";
+    systemInstruction = "You are CareerBot (Demo Mode). You are restricted. You can ONLY answer general questions about why education is important in 1 short sentence. If the user asks about specific course content, say: 'I cannot access that information in Demo Mode. Please sign in.'";
   }
 
   chatSession = ai.chats.create({
@@ -563,6 +566,16 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
     return `${cleanUser}@careerfinder.app`;
   };
 
+  const forceMockLogin = (tier, interestVal) => {
+    console.warn("Supabase Auth failed or skipped. Using Mock User for demo.");
+    localStorage.setItem('careerfinder_mock_user', JSON.stringify({
+      username: username || 'Student',
+      tier: tier || 'PAID',
+      interest: interestVal
+    }));
+    window.location.reload();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -584,14 +597,7 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
         });
 
         if (signUpError) {
-             // FALLBACK: If Signup fails (e.g. rate limit, bad config), use local mock so user can proceed
-             console.warn("Supabase Signup Failed, using Mock User", signUpError);
-             localStorage.setItem('careerfinder_mock_user', JSON.stringify({
-                username,
-                tier: selectedTier,
-                interest
-             }));
-             window.location.reload();
+             forceMockLogin(selectedTier, interest);
              return;
         }
         
@@ -607,21 +613,14 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
         });
 
         if (signInError) {
-             // FALLBACK: If Login fails (e.g. email not confirmed), use local mock so user can proceed
-             console.warn("Supabase Login Failed, using Mock User", signInError);
-             localStorage.setItem('careerfinder_mock_user', JSON.stringify({
-                username,
-                tier: 'PAID', // Assume PAID for demo purposes if login fails
-                interest: undefined // Can't know interest without real DB, will default to general
-             }));
-             window.location.reload();
+             forceMockLogin('PAID', interest);
              return;
         }
         
         onClose();
       }
     } catch (err) {
-      setError(err.message || 'An error occurred.');
+      forceMockLogin('PAID', interest); // Aggressive fallback for demo
     } finally {
       setLoading(false);
     }
@@ -660,7 +659,6 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
               </div>
               
               <div className="space-y-4">
-                {/* PLAN 1: BUNDLE */}
                 <button 
                   onClick={() => handlePlanSelect('BUNDLE')}
                   className="w-full flex items-center justify-between p-5 border-2 border-green-500 bg-green-50 rounded-xl hover:bg-green-100 transition shadow-sm group"
@@ -672,7 +670,6 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
                   <div className="font-bold text-green-700 bg-white px-3 py-1 rounded-lg shadow-sm">$10.00</div>
                 </button>
 
-                {/* PLAN 2: SINGLE */}
                 <button 
                   onClick={() => handlePlanSelect('SINGLE')}
                   className="w-full flex items-center justify-between p-5 border-2 border-orange-200 bg-orange-50 rounded-xl hover:border-orange-400 hover:bg-orange-100 transition shadow-sm group"
@@ -684,7 +681,6 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
                   <div className="font-bold text-orange-600 bg-white px-3 py-1 rounded-lg shadow-sm">$2.50</div>
                 </button>
 
-                {/* PLAN 3: GUEST/DEMO */}
                 <button 
                   onClick={() => handlePlanSelect('GUEST')}
                   className="w-full flex items-center justify-between p-5 border-2 border-slate-200 bg-slate-50 rounded-xl hover:border-slate-400 hover:bg-slate-100 transition shadow-sm group"
@@ -962,7 +958,8 @@ const App = () => {
   const [view, setView] = useState('landing');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
-  
+  const [activeModuleIndex, setActiveModuleIndex] = useState(0);
+
   const [showQuizResult, setShowQuizResult] = useState(false);
   const [quizResult, setQuizResult] = useState(null);
   const [quizActive, setQuizActive] = useState(false);
@@ -1069,6 +1066,124 @@ const App = () => {
     return () => clearInterval(interval);
   }, []);
 
+   // --- Dynamic Module Generation ---
+  const currentModules = useMemo(() => {
+    if (!selectedCourse) return [];
+    
+    const t = selectedCourse.tags;
+    const mainTag = t[0] || "General";
+    const secTag = t[1] || "Advanced";
+
+    return [
+      {
+        title: `Introduction to ${selectedCourse.title}`,
+        duration: "15 mins",
+        content: (
+          <React.Fragment>
+            <p className="mb-4 text-lg leading-relaxed">
+              Welcome to <strong>{selectedCourse.title}</strong>. This is the beginning of your journey into the world of {mainTag}. 
+              Whether you are here to build a career or explore a passion, understanding the fundamental landscape of this industry is crucial.
+            </p>
+            <h3 className="text-xl font-bold text-slate-800 mt-6 mb-3">Why {mainTag} Matters</h3>
+            <p className="mb-4">
+              In today's rapidly evolving economy, {mainTag} remains a cornerstone of innovation and service. 
+              By mastering these skills, you position yourself not just as a participant, but as a leader.
+            </p>
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 my-6">
+              <h4 className="font-bold text-blue-900">Learning Objective</h4>
+              <p className="text-blue-800 text-sm">By the end of this module, you will be able to articulate the core value proposition of {selectedCourse.title} and identify key career opportunities.</p>
+            </div>
+          </React.Fragment>
+        )
+      },
+      {
+        title: `Core Principles of ${mainTag}`,
+        duration: "45 mins",
+        content: (
+          <React.Fragment>
+            <p className="mb-4 text-lg leading-relaxed">
+              Before we can run, we must walk. This module breaks down the essential theories that underpin {selectedCourse.title}.
+            </p>
+            <h3 className="text-xl font-bold text-slate-800 mt-6 mb-3">The Three Pillars</h3>
+            <ul className="list-disc pl-5 space-y-2 mb-6">
+              <li><strong>Theory:</strong> Understanding the 'Why' behind the 'How'.</li>
+              <li><strong>Application:</strong> Using {secTag} in real-world scenarios.</li>
+              <li><strong>Ethics:</strong> maintaining high standards in {mainTag}.</li>
+            </ul>
+            <p>
+              Many beginners skip these steps, leading to fragile foundations. We will ensure you have a robust understanding of the basics.
+            </p>
+          </React.Fragment>
+        )
+      },
+      {
+        title: `Tools & Techniques: ${secTag}`,
+        duration: "60 mins",
+        content: (
+          <React.Fragment>
+            <p className="mb-4 text-lg leading-relaxed">
+              It is time to get your hands dirty. In this module, we explore the industry-standard tools used by professionals in {mainTag}.
+            </p>
+            <h3 className="text-xl font-bold text-slate-800 mt-6 mb-3">Required Equipment</h3>
+            <p className="mb-4">
+              You don't need the most expensive gear to start, but you do need reliable tools. We will review the best options for {secTag} at every budget level.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                 <div className="font-bold text-slate-700 mb-1">Beginner Setup</div>
+                 <div className="text-sm text-slate-500">Focus on accessibility and ease of use.</div>
+               </div>
+               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                 <div className="font-bold text-slate-700 mb-1">Pro Setup</div>
+                 <div className="text-sm text-slate-500">Focus on efficiency, scale, and durability.</div>
+               </div>
+            </div>
+          </React.Fragment>
+        )
+      },
+      {
+        title: `Advanced Strategies in ${selectedCourse.title}`,
+        duration: "90 mins",
+        content: (
+          <React.Fragment>
+            <p className="mb-4 text-lg leading-relaxed">
+              Now that you have the basics, let's look at how experts differentiate themselves. 
+              Advanced {mainTag} involves critical thinking and pattern recognition.
+            </p>
+            <h3 className="text-xl font-bold text-slate-800 mt-6 mb-3">Case Study Analysis</h3>
+            <p className="mb-4">
+              We will examine a real-world scenario where standard methods failed, and creative application of {secTag} saved the day.
+            </p>
+            <p className="mb-4">
+              <strong>Key Takeaway:</strong> Rules are meant to be understood so they can be effectively broken when innovation is required.
+            </p>
+          </React.Fragment>
+        )
+      },
+      {
+        title: "Final Assessment & Career Roadmap",
+        duration: "30 mins",
+        content: (
+          <React.Fragment>
+            <p className="mb-4 text-lg leading-relaxed">
+              Congratulations on reaching the final module. You have covered the spectrum of {selectedCourse.title}.
+            </p>
+            <h3 className="text-xl font-bold text-slate-800 mt-6 mb-3">Next Steps</h3>
+            <p className="mb-6">
+              To turn this knowledge into a career, you must build a portfolio. Start small, document your work in {mainTag}, and network with others in {secTag}.
+            </p>
+            <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+              <div className="text-4xl mb-2">🎓</div>
+              <h4 className="font-bold text-green-900 text-lg">Certificate of Completion</h4>
+              <p className="text-green-800 text-sm mb-4">You are ready to take the final quiz to earn your credential.</p>
+              <Button onClick={() => alert("Certificate Downloaded!")}>Download Certificate</Button>
+            </div>
+          </React.Fragment>
+        )
+      }
+    ];
+  }, [selectedCourse]);
+
   const openAuthModal = (mode, interestToSelect) => {
     setAuthMode(mode);
     if (interestToSelect) {
@@ -1107,6 +1222,47 @@ const App = () => {
   const openCourse = (course) => {
     setSelectedCourse(course);
     setView('course_details');
+  };
+
+  // AUTO-SAVE LOGIC
+  // Save progress whenever activeModuleIndex changes
+  useEffect(() => {
+    if (user && selectedCourse && view === 'learning_mode') {
+      const key = `progress_${user.id}_${selectedCourse.id}`;
+      localStorage.setItem(key, activeModuleIndex.toString());
+      console.log("Auto-saved progress:", key, activeModuleIndex);
+    }
+  }, [activeModuleIndex, user, selectedCourse, view]);
+
+  // Load progress when starting learning
+  const startLearning = () => {
+    if (user && selectedCourse) {
+       const key = `progress_${user.id}_${selectedCourse.id}`;
+       const saved = localStorage.getItem(key);
+       if (saved) {
+         setActiveModuleIndex(parseInt(saved));
+       } else {
+         setActiveModuleIndex(0);
+       }
+    } else {
+       setActiveModuleIndex(0);
+    }
+    setView('learning_mode');
+    window.scrollTo(0, 0);
+  };
+
+  const nextModule = () => {
+    if (activeModuleIndex < currentModules.length - 1) {
+      setActiveModuleIndex(prev => prev + 1);
+      window.scrollTo(0, 0);
+    }
+  };
+
+  const prevModule = () => {
+    if (activeModuleIndex > 0) {
+      setActiveModuleIndex(prev => prev - 1);
+      window.scrollTo(0, 0);
+    }
   };
 
   const resetQuiz = () => {
@@ -1248,7 +1404,6 @@ const App = () => {
               </div>
             </div>
 
-            {/* PROPAGANDA: FEAR BANNER */}
             <div className="w-full max-w-3xl mx-auto mb-12 bg-red-600 text-white p-6 rounded-lg shadow-2xl border-4 border-yellow-400 animate-pulse text-center transform rotate-1">
               <h2 className="text-2xl md:text-3xl font-black uppercase tracking-widest text-yellow-300 leading-none mb-1">WARNING: LAST CHANCE TO BOARD.</h2>
               <p className="font-bold text-lg md:text-xl">
@@ -1256,7 +1411,6 @@ const App = () => {
               </p>
             </div>
 
-            {/* PROPAGANDA JINGLE */}
             <div className="bg-orange-400 -rotate-2 rounded-xl p-12 shadow-xl mb-16 max-w-4xl mx-auto transform hover:rotate-0 transition-transform cursor-default border-4 border-white">
               <div className="text-center text-white font-black text-4xl md:text-6xl tracking-wide uppercase drop-shadow-md leading-tight">
                 Skilled and bold.<br/>
@@ -1264,7 +1418,6 @@ const App = () => {
               </div>
             </div>
 
-             {/* BANDWAGON COUNTER */}
             <div className="text-center mb-16">
                <div className="inline-block bg-slate-800 p-8 rounded-3xl shadow-2xl border-b-8 border-slate-600">
                   <div className="text-5xl md:text-7xl font-black text-green-400 tabular-nums font-mono mb-2">
@@ -1279,7 +1432,6 @@ const App = () => {
                </div>
             </div>
 
-            {/* Propaganda Section */}
             <div className="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
                <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-xl text-white transform hover:scale-105 transition-transform flex flex-col">
                  <div className="text-4xl mb-4">👑</div>
@@ -1306,7 +1458,6 @@ const App = () => {
                </div>
             </div>
 
-            {/* Testimonials */}
             <div className="max-w-4xl mx-auto mt-16 mb-16 px-4">
               <h2 className="text-3xl font-bold text-center text-green-900 mb-8">Trusted by Famous People</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1327,13 +1478,11 @@ const App = () => {
               </div>
             </div>
 
-            {/* Blobs */}
             <div className="fixed top-1/4 left-10 w-72 h-72 bg-green-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 -z-10 animate-pulse"></div>
             <div className="fixed bottom-1/4 right-10 w-72 h-72 bg-orange-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 -z-10 animate-pulse delay-75"></div>
           </div>
         )}
 
-        {/* CLUSTERS LIST VIEW */}
         {view === 'clusters_list' && (
            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
              <div className="text-center mb-12">
@@ -1371,7 +1520,6 @@ const App = () => {
            </div>
         )}
 
-        {/* SINGLE CLUSTER VIEW */}
         {view === 'cluster_courses' && selectedCategory && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-500">
              <button onClick={goToClusters} className="mb-6 flex items-center text-slate-500 hover:text-green-600 transition font-medium">
@@ -1461,7 +1609,6 @@ const App = () => {
           </div>
         )}
 
-        {/* COURSE DETAIL VIEW */}
         {view === 'course_details' && selectedCourse && (
           <div className="animate-in fade-in slide-in-from-right-8 duration-500 max-w-5xl mx-auto">
             <button onClick={() => selectedCategory ? openCluster(selectedCategory) : goToClusters()} className="mb-6 flex items-center text-slate-500 hover:text-green-600 transition font-medium">
@@ -1499,7 +1646,7 @@ const App = () => {
 
                    <div className="flex flex-col gap-3">
                      {isUserPaid ? (
-                       <Button size="lg" className="w-full" onClick={() => alert("Accessing Course Content... (Simulated)")}>
+                       <Button size="lg" className="w-full" onClick={startLearning}>
                          Start Learning Now
                        </Button>
                      ) : (
@@ -1530,6 +1677,114 @@ const App = () => {
                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-indigo-500 rounded-full mix-blend-overlay filter blur-3xl opacity-20"></div>
                <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-purple-500 rounded-full mix-blend-overlay filter blur-3xl opacity-20"></div>
             </div>
+          </div>
+        )}
+
+        {view === 'learning_mode' && selectedCourse && currentModules.length > 0 && (
+          <div className="animate-in fade-in zoom-in-95 duration-500 flex flex-col lg:flex-row gap-8 max-w-6xl mx-auto">
+             
+             {/* Sidebar */}
+             <div className="w-full lg:w-1/4">
+                <button onClick={() => setView('course_details')} className="mb-6 flex items-center text-slate-500 hover:text-green-600 transition font-medium">
+                  <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                  Exit Course
+                </button>
+
+                <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden sticky top-24">
+                   <div className="bg-green-50 p-4 border-b border-green-100">
+                      <h4 className="font-bold text-green-900 text-sm uppercase tracking-wide">Course Syllabus</h4>
+                   </div>
+                   <div className="divide-y divide-slate-50 max-h-[60vh] overflow-y-auto">
+                      {currentModules.map((module, idx) => (
+                        <div 
+                           key={idx} 
+                           onClick={() => {
+                             setActiveModuleIndex(idx);
+                             window.scrollTo(0, 0);
+                           }}
+                           className={`p-4 cursor-pointer hover:bg-slate-50 transition-colors border-l-4 ${
+                             activeModuleIndex === idx 
+                               ? 'bg-indigo-50 border-indigo-500' 
+                               : 'border-transparent'
+                           }`}
+                        >
+                           <div className="flex justify-between items-center mb-1">
+                             <div className={`text-xs font-bold ${activeModuleIndex === idx ? 'text-indigo-500' : 'text-slate-400'}`}>
+                               Module {idx + 1}
+                             </div>
+                             <div className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500">
+                               {module.duration}
+                             </div>
+                           </div>
+                           <div className={`font-medium text-sm ${activeModuleIndex === idx ? 'text-indigo-900' : 'text-slate-700'}`}>
+                             {module.title}
+                           </div>
+                        </div>
+                      ))}
+                   </div>
+                </div>
+             </div>
+
+             {/* Main Content */}
+             <div className="flex-1">
+                <div className="bg-white rounded-3xl shadow-lg border border-slate-100 p-8 md:p-12">
+                   <div className="flex items-center gap-3 mb-6">
+                     <span className="inline-block bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">
+                       Module {activeModuleIndex + 1}
+                     </span>
+                     <span className="text-slate-400 text-sm">/ {currentModules.length} Modules</span>
+                   </div>
+                   
+                   <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-6">
+                     {currentModules[activeModuleIndex].title}
+                   </h1>
+                   
+                   <div className="prose prose-lg text-slate-600 max-w-none">
+                      <img 
+                        src={selectedCourse.image} 
+                        className="w-full h-64 object-cover rounded-2xl mb-8 shadow-sm" 
+                        onError={handleImageError} 
+                        alt="Course Header"
+                      />
+                      
+                      {/* Dynamic Content */}
+                      {currentModules[activeModuleIndex].content}
+
+                      {/* AI Assistance Box - Replaces Generic Pro Tip */}
+                      <div className="bg-green-50 border border-green-100 rounded-xl p-6 flex flex-col sm:flex-row items-start gap-4 mt-12">
+                         <div className="text-3xl">🤖</div>
+                         <div>
+                           <h4 className="font-bold text-green-900 mb-1">Need Clarification?</h4>
+                           <p className="text-sm text-green-800 mb-3">
+                             CareerBot is reading along with you. If you don't understand specific terms in this module, just ask!
+                           </p>
+                           <button 
+                             onClick={() => document.querySelector('.fixed.bottom-6.right-6 button')?.click()}
+                             className="text-xs font-bold bg-white text-green-700 px-3 py-2 rounded-lg shadow-sm hover:shadow hover:bg-green-50 transition"
+                           >
+                             Ask CareerBot
+                           </button>
+                         </div>
+                      </div>
+                   </div>
+
+                   <div className="mt-12 flex justify-between items-center border-t border-slate-100 pt-8">
+                      <Button 
+                        variant="outline" 
+                        onClick={prevModule} 
+                        disabled={activeModuleIndex === 0}
+                      >
+                        ← Previous
+                      </Button>
+                      <Button 
+                        onClick={nextModule} 
+                        disabled={activeModuleIndex === currentModules.length - 1}
+                      >
+                        {activeModuleIndex === currentModules.length - 1 ? 'Finish Course' : 'Next Module →'}
+                      </Button>
+                   </div>
+                </div>
+             </div>
           </div>
         )}
 

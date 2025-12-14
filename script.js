@@ -10,8 +10,8 @@ import { createClient } from '@supabase/supabase-js';
 // YOUR PROVIDED API KEY
 const GEMINI_API_KEY = "AIzaSyADwJbM9vyTIBGjsYkSAhRbN4pR_qUgJy0"; 
 
-const supabaseUrl = 'https://bwjjfnkuqnravvfytxbf.supabase.co';
-const supabaseKey = 'sb_publishable_9z5mRwy-X0zERNX7twZzPw_RdskfL8s';
+const supabaseUrl = 'https://iildoyyezcqvlcxvohvh.supabase.co';
+const supabaseKey = 'sb_publishable_BXdW8AdxKXIpMfbMwyyZ_A_Ejd2PpPk';
 
 // ==========================================
 // 1. DATA & CONSTANTS
@@ -1509,7 +1509,7 @@ const App = () => {
       <footer className="bg-slate-900 text-slate-400 py-12 mt-12">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="mb-4 font-bold text-slate-200 text-lg">CareerFinder AI</p>
-          <p className="text-sm">© 2024 CareerFinder Inc. All rights reserved.</p>
+          <p className="text-sm">© 2025 CareerFinder Inc. All rights reserved.</p>
           <p className="text-xs mt-4 text-slate-600">Disclaimer: Career advice is based on algorithms. Results may vary. Happiness is not guaranteed but highly probable.</p>
         </div>
       </footer>

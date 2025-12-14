@@ -600,10 +600,6 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
         });
 
         if (signInError) {
-             // Show actual error from Supabase so user knows why it failed
-             if (signInError.message.includes("Email not confirmed")) {
-                 throw new Error("Login failed: Email not confirmed. Please disable 'Confirm email' in your Supabase Dashboard.");
-             }
              throw signInError;
         }
         

@@ -409,9 +409,8 @@ let currentTier = 'GUEST';
 let currentInterest = undefined;
 
 const initializeChat = (tier, interest) => {
-  // CONFIGURATION: API KEY
-  // We check process.env first (for secure builds), then fallback to the hardcoded key (for school/demo).
-  const apiKey = (typeof process !== 'undefined' && process.env?.API_KEY) || GEMINI_API_KEY || '';
+  // Use the key from the variable at the top of the file
+  const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) || GEMINI_API_KEY || '';
 
   if (!apiKey || apiKey === "PASTE_YOUR_GEMINI_API_KEY_HERE") {
     console.warn("API Key is missing. Please edit script.js line 10.");
@@ -483,7 +482,9 @@ const sendMessageToAgent = async (message) => {
     return result.text || "I couldn't think of a response.";
   } catch (error) {
     console.error("Gemini Error:", error);
-    return "Sorry, I am having trouble connecting right now.";
+    // Return specific error message to the user for debugging
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return `CareerBot Connection Failed. Error details: ${errorMessage}. (Check Console for more info)`;
   }
 };
 

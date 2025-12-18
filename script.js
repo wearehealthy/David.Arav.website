@@ -1979,4 +1979,13 @@ const App = () => {
   );
 };
 
-export default App;
+// MOUNT THE APP TO THE DOM
+const rootElement = document.getElementById('root');
+if (rootElement) {
+  const root = createRoot(rootElement);
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+}

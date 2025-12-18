@@ -800,7 +800,7 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
                     <div className="font-bold text-green-900 text-lg group-hover:text-green-700">Cluster Bundle</div>
                     <div className="text-xs text-green-700 font-medium">5 Courses in 1 Topic</div>
                   </div>
-                  <div className="font-bold text-green-700 bg-white px-3 py-1 rounded-lg shadow-sm">$10.00</div>
+                  <div className="font-bold text-green-700 bg-white px-3 py-1 rounded-lg shadow-sm">$85.00</div>
                 </button>
 
                 <button 

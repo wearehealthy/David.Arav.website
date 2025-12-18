@@ -4,19 +4,25 @@ import { GoogleGenAI } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
 
 // ==========================================
-// 🚨 API KEY CONFIGURATION 🚨
+// 1. CONFIGURATION & SERVICES
 // ==========================================
-// Split key to prevent casual scraping
+
+// Safe process check for browser environment
+const safeProcessEnv = (typeof process !== 'undefined' && process.env) ? process.env : {};
+
+// API Key Construction
 const K_PART_1 = "AIzaSyDTcFJA";
 const K_PART_2 = "5cLFeIfbjM4";
 const K_PART_3 = "Lup54CYVhGGYUa3Q";
-const FALLBACK_KEY = K_PART_1 + K_PART_2 + K_PART_3;
+const GEMINI_API_KEY = K_PART_1 + K_PART_2 + K_PART_3; // Fallback key
 
 const supabaseUrl = 'https://bwjjfnkuqnravvfytxbf.supabase.co';
 const supabaseKey = 'sb_publishable_9z5mRwy-X0zERNX7twZzPw_RdskfL8s';
 
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 // ==========================================
-// 1. DATA & CONSTANTS (THE PERFECT 10)
+// 2. DATA CONSTANTS
 // ==========================================
 
 const CATEGORIES = [
@@ -493,22 +499,16 @@ const CATEGORIES = [
 ];
 
 // ==========================================
-// 2. SERVICES
+// 3. GEMINI AI SERVICE
 // ==========================================
-
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-// --- GEMINI SERVICE ---
 
 let chatSession = null;
 let currentTier = 'GUEST';
 let currentInterest = undefined;
 
 const initializeChat = (tier, interest) => {
-  // 1. Try process.env.API (User defined secret)
-  // 2. Try process.env.API_KEY (Standard secret)
-  // 3. Fallback to obfuscated key
-  let apiKey = (typeof process !== 'undefined' && process.env && (process.env.API || process.env.API_KEY)) || FALLBACK_KEY || '';
+  // Use safe access for process.env
+  const apiKey = safeProcessEnv.API_KEY || GEMINI_API_KEY || '';
 
   if (!apiKey) {
     console.warn("API Key is missing.");
@@ -521,7 +521,6 @@ const initializeChat = (tier, interest) => {
 
   let systemInstruction = "";
 
-  // Treat 'BUNDLE', 'SINGLE', and 'ALL_ACCESS' as paid tiers
   const isPaid = tier === 'BUNDLE' || tier === 'SINGLE' || tier === 'ALL_ACCESS' || tier === 'PAID';
 
   if (isPaid) {
@@ -539,7 +538,6 @@ const initializeChat = (tier, interest) => {
     }
 
     if (curriculum) {
-      // TUNED AI PERSONA FOR SCHOOL PROJECT
       systemInstruction = `You are CareerBot, a friendly and expert academic advisor.
       
       You have access to the user's purchased curriculum.
@@ -587,7 +585,6 @@ const sendMessageToAgent = async (message) => {
     return result.text || "I couldn't think of a response.";
   } catch (error) {
     console.error("Gemini Error:", error);
-    // Return specific error message to the user for debugging
     const errorMessage = error instanceof Error ? error.message : String(error);
     
     if (errorMessage.includes("403") || errorMessage.includes("leaked") || errorMessage.includes("expired")) {
@@ -599,7 +596,7 @@ const sendMessageToAgent = async (message) => {
 };
 
 // ==========================================
-// 3. COMPONENTS
+// 4. COMPONENTS
 // ==========================================
 
 const Button = ({ 
@@ -671,7 +668,6 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
     setSelectedTier(tier);
     setView('FORM');
     setError('');
-    // If they bought ALL_ACCESS, interest doesn't strictly matter, but we can set a default
     if (tier === 'ALL_ACCESS') {
        setInterest('Everything');
     }
@@ -702,7 +698,6 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
 
       if (mode === 'SIGNUP') {
         if (!username.trim() || !password.trim()) throw new Error('Please fill in all fields.');
-        // Only require interest if not buying ALL_ACCESS
         if (selectedTier !== 'ALL_ACCESS' && !interest) throw new Error('Please select an Interest.');
 
         const finalInterest = selectedTier === 'ALL_ACCESS' ? 'Everything' : interest;
@@ -723,7 +718,6 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
         onClose();
 
       } else {
-        // LOGIN
         if (!username.trim() || !password.trim()) throw new Error('Please enter username and password.');
 
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -732,7 +726,6 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
         });
 
         if (signInError) {
-             // Fallback for demo if password/login fails
              forceMockLogin('ALL_ACCESS', 'Everything');
              return;
         }
@@ -779,23 +772,18 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
               </div>
               
               <div className="space-y-4">
-                 {/* NEW ULTIMATE BUNDLE BUTTON - WHITE WITH GOLD BORDER */}
                 <button 
                   onClick={() => handlePlanSelect('ALL_ACCESS')}
-                  className="w-full relative group"
+                  className="w-full flex items-center justify-between p-5 border-4 border-yellow-400 bg-yellow-50 rounded-xl hover:bg-yellow-100 transition shadow-lg group relative overflow-hidden"
                 >
-                  <div className="absolute -top-3 -right-2 z-20">
-                     <div className="bg-yellow-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm border-2 border-white">
-                       Best Value
-                     </div>
+                  <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-black px-2 py-0.5 uppercase tracking-wide">
+                      Best Value
                   </div>
-                  <div className="flex items-center justify-between p-5 bg-white border-4 border-yellow-400 rounded-xl shadow-lg hover:shadow-2xl hover:bg-yellow-50 transition-all">
-                    <div className="text-left">
-                      <div className="font-bold text-yellow-900 text-lg">Get It All (Perfect 10)</div>
-                      <div className="text-xs text-yellow-700 font-medium">Access EVERY Course + AI</div>
-                    </div>
-                    <div className="font-bold text-yellow-900 text-xl">$85.00</div>
+                  <div className="text-left relative z-10">
+                    <div className="font-bold text-yellow-900 text-lg group-hover:text-yellow-700">Get It All (Perfect 10)</div>
+                    <div className="text-xs text-yellow-800 font-medium">Access EVERY Course + AI</div>
                   </div>
+                  <div className="font-bold text-yellow-800 bg-white px-3 py-1 rounded-lg shadow-sm relative z-10">$25.00</div>
                 </button>
 
                 <button 
@@ -837,7 +825,7 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
                       'bg-slate-100 text-slate-600'
                     }`}>
                     Selected: {
-                        selectedTier === 'ALL_ACCESS' ? 'Perfect 10 Bundle ($85)' :
+                        selectedTier === 'ALL_ACCESS' ? 'Perfect 10 Bundle ($25)' :
                         selectedTier === 'BUNDLE' ? 'Cluster Bundle ($10)' : 
                         'Demo Mode (Free)'
                     }
@@ -1074,7 +1062,7 @@ const ChatWidget = ({ user, onLoginRequest }) => {
 };
 
 // ==========================================
-// 4. MAIN APP
+// 5. MAIN APP COMPONENT
 // ==========================================
 
 const App = () => {
@@ -1123,9 +1111,8 @@ const App = () => {
     }
   ];
 
-  // Auth Listener
   useEffect(() => {
-    // 0. Check for Mock User (Fallback for school project)
+    // 0. Check for Mock User
     const checkUser = async () => {
         const mock = localStorage.getItem('careerfinder_mock_user');
         if (mock) {
@@ -1137,7 +1124,6 @@ const App = () => {
                     tier: u.tier,
                     interest: u.interest
                 });
-                // If we found a mock user, we don't necessarily wait for supabase
             } catch (e) {
                 localStorage.removeItem('careerfinder_mock_user');
             }
@@ -1167,10 +1153,8 @@ const App = () => {
         });
         setShowLoginModal(false); 
         setPreselectedInterest(undefined);
-        // Clean up mock if real auth works
         localStorage.removeItem('careerfinder_mock_user');
       } else {
-        // Only reset if we don't have a mock user
         if (!localStorage.getItem('careerfinder_mock_user')) {
              setUser(null);
              setView('landing'); 
@@ -1194,7 +1178,6 @@ const App = () => {
     return () => clearInterval(interval);
   }, []);
 
-   // --- Dynamic Module Generation ---
   const currentModules = useMemo(() => {
     if (!selectedCourse) return [];
     
@@ -1450,7 +1433,6 @@ const App = () => {
     e.currentTarget.src = "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=640&q=80";
   };
 
-  // CHECK ACCESS LOGIC (Strict - returns true ONLY if paid/unlocked)
   const checkAccess = (user, clusterTitle) => {
       if (!user) return false;
       if (user.tier === 'ALL_ACCESS') return true;
@@ -1458,11 +1440,7 @@ const App = () => {
       return false;
   };
 
-  // Determine if the current course is unlocked for this user
   const isUnlocked = user && selectedCategory && checkAccess(user, selectedCategory.title);
-
-  // Guests are allowed to view details and preview module 1
-  const isGuest = !user || (!isUnlocked);
 
   return (
     <div className="min-h-screen flex flex-col bg-green-50 font-sans text-slate-800">
@@ -1979,13 +1957,18 @@ const App = () => {
   );
 };
 
-// MOUNT THE APP TO THE DOM
+// ==========================================
+// 6. MOUNT THE APPLICATION
+// ==========================================
+// This is critical for browser-based React apps
 const rootElement = document.getElementById('root');
-if (rootElement) {
-  const root = createRoot(rootElement);
-  root.render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
+if (!rootElement) {
+  throw new Error("Could not find root element to mount to");
 }
+
+const root = createRoot(rootElement);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);

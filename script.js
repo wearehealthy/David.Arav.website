@@ -558,8 +558,9 @@ const initializeChat = (tier, interest) => {
     systemInstruction = "You are CareerBot (Demo Mode). You are restricted. You can ONLY answer general questions about why education is important in 1 short sentence. If the user asks about specific course content, say: 'I cannot access that information in Demo Mode. Please sign in.'";
   }
 
+  // UPDATED: Use a stable preview model for text tasks
   chatSession = ai.chats.create({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3-flash-preview', 
     config: {
       systemInstruction: systemInstruction,
     },

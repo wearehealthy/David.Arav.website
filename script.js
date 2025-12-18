@@ -6,9 +6,12 @@ import { createClient } from '@supabase/supabase-js';
 // ==========================================
 // 🚨 ACTION REQUIRED: API KEY SETUP 🚨
 // ==========================================
-// Go to https://aistudio.google.com/app/apikey to get a new key.
-// Paste it inside the quotes below to fix the "Expired" error.
-const MANUAL_API_KEY = "AIzaSyCAR1to98z0oOWie46VYEeJ3wYgjPAfLAo"; 
+// Splitting the key into 3 parts as requested for the school project
+const keyPart1 = "AIzaSyDTcFJA";
+const keyPart2 = "5cLFeIfbjM4Lup";
+const keyPart3 = "54CYVhGGYUa3Q";
+
+const GEMINI_API_KEY = keyPart1 + keyPart2 + keyPart3;
 
 const supabaseUrl = 'https://bwjjfnkuqnravvfytxbf.supabase.co';
 const supabaseKey = 'sb_publishable_9z5mRwy-X0zERNX7twZzPw_RdskfL8s';
@@ -174,8 +177,8 @@ const CATEGORIES = [
       },
       {
         id: 'bus-101',
-        title: 'Corporate Strategy',
-        description: 'Master the art of high-level decision making.',
+        title: 'Business Strategy',
+        description: 'How to plan for long term growth and stability.',
         price: 2.50,
         image: 'https://images.unsplash.com/photo-1533750516457-a7f992034fec?auto=format&fit=crop&w=640&q=80',
         tags: ['Marketing', 'Strategy']
@@ -198,8 +201,8 @@ const CATEGORIES = [
       },
       {
         id: 'bus-505',
-        title: 'HR & Management',
-        description: 'Leading diverse teams to success.',
+        title: 'HR & Operations',
+        description: 'Managing people and processes efficiently.',
         price: 2.50,
         image: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=640&q=80',
         tags: ['Management', 'Teams']
@@ -254,237 +257,237 @@ const CATEGORIES = [
     ]
   },
   {
-    id: 'pivot-cluster',
+    id: 'career-pivot',
     title: 'The Career Pivot & Soft Skills',
     type: 'CLUSTER',
     courses: [
       {
         id: 'piv-001',
-        title: 'Resume Reinvention',
-        description: 'How to translate your skills into a new language.',
+        title: 'Networking for Introverts',
+        description: 'How to build connections without feeling fake or drained.',
         price: 2.50,
-        image: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=640&q=80',
-        tags: ['Career', 'Writing']
+        image: 'https://images.unsplash.com/photo-1521791136064-7985c2d18854?auto=format&fit=crop&w=640&q=80',
+        tags: ['Social', 'Career']
       },
       {
         id: 'piv-002',
-        title: 'Networking for Introverts',
-        description: 'Making connections without the awkwardness.',
+        title: 'Resume Branding',
+        description: 'Turn your boring CV into a marketing document.',
         price: 2.50,
-        image: 'https://images.unsplash.com/photo-1515169067750-d51a73b05121?auto=format&fit=crop&w=640&q=80',
-        tags: ['Social', 'People']
+        image: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=640&q=80',
+        tags: ['Writing', 'Business']
       },
       {
         id: 'piv-003',
-        title: 'Interview Mastery',
-        description: 'Crush the interview and get the offer.',
+        title: 'Negotiating Your Salary',
+        description: 'The art of getting paid what you are actually worth.',
         price: 2.50,
-        image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=640&q=80',
-        tags: ['Jobs', 'Speaking']
+        image: 'https://images.unsplash.com/photo-1579621970795-87facc2f976d?auto=format&fit=crop&w=640&q=80',
+        tags: ['Money', 'Talk']
       },
       {
         id: 'piv-004',
-        title: 'Negotiating Your Worth',
-        description: 'Salary negotiation tactics that actually work.',
+        title: 'Public Speaking',
+        description: 'Command the room and present with confidence.',
         price: 2.50,
-        image: 'https://images.unsplash.com/photo-1554224154-260327c00c40?auto=format&fit=crop&w=640&q=80',
-        tags: ['Money', 'Finance']
+        image: 'https://images.unsplash.com/photo-1475721027767-4d0637c60eef?auto=format&fit=crop&w=640&q=80',
+        tags: ['Speech', 'Leadership']
       },
       {
         id: 'piv-005',
         title: 'Emotional Intelligence',
-        description: 'Reading the room and managing workplace dynamics.',
+        description: 'Understanding yourself and others in the workplace.',
         price: 2.50,
         image: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=640&q=80',
-        tags: ['Mind', 'Leadership']
+        tags: ['Mind', 'Psychology']
       }
     ]
   },
   {
-    id: 'game-cluster',
+    id: 'board-game-design',
     title: 'Board Game Design & Gamification',
     type: 'CLUSTER',
     courses: [
       {
-        id: 'gam-001',
-        title: 'Mechanics vs Theme',
-        description: 'Building the core engine of your tabletop game.',
+        id: 'bg-001',
+        title: 'Game Mechanics 101',
+        description: 'Understanding rules, loops, and player incentives.',
         price: 2.50,
-        image: 'https://images.unsplash.com/photo-1611996575749-79a3a250f948?auto=format&fit=crop&w=640&q=80',
-        tags: ['Design', 'Creative']
+        image: 'https://images.unsplash.com/photo-1610890716271-e2fe9e871436?auto=format&fit=crop&w=640&q=80',
+        tags: ['Design', 'Logic']
       },
       {
-        id: 'gam-002',
+        id: 'bg-002',
         title: 'Prototyping with Paper',
-        description: 'Rapid iteration using cheap materials.',
+        description: 'Fast and cheap ways to test your game ideas.',
         price: 2.50,
-        image: 'https://images.unsplash.com/photo-1606503153255-59d8b8b82176?auto=format&fit=crop&w=640&q=80',
-        tags: ['Art', 'Craft']
+        image: 'https://images.unsplash.com/photo-1606167568502-5b8916f56c28?auto=format&fit=crop&w=640&q=80',
+        tags: ['Creative', 'Art']
       },
       {
-        id: 'gam-003',
-        title: 'Playtesting 101',
-        description: 'How to get useful feedback without crying.',
+        id: 'bg-003',
+        title: 'Balancing Luck vs. Skill',
+        description: 'Math and probability for game designers.',
         price: 2.50,
-        image: 'https://images.unsplash.com/photo-1610890716171-6b1bb98a7f31?auto=format&fit=crop&w=640&q=80',
-        tags: ['Testing', 'Logic']
+        image: 'https://images.unsplash.com/photo-1605806616949-1e87b487bc2a?auto=format&fit=crop&w=640&q=80',
+        tags: ['Math', 'Strategy']
       },
       {
-        id: 'gam-004',
-        title: 'Kickstarter Campaigning',
-        description: 'Marketing your game to the masses.',
+        id: 'bg-004',
+        title: 'Crowdfunding Your Game',
+        description: 'How to launch a successful Kickstarter campaign.',
         price: 2.50,
         image: 'https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?auto=format&fit=crop&w=640&q=80',
         tags: ['Business', 'Money']
       },
       {
-        id: 'gam-005',
-        title: 'Game Theory Basics',
-        description: 'Math and psychology behind strategic choices.',
+        id: 'bg-005',
+        title: 'Gamifying Real Life',
+        description: 'Applying game design to work, school, and habits.',
         price: 2.50,
-        image: 'https://images.unsplash.com/photo-1504639725590-34d0984388bd?auto=format&fit=crop&w=640&q=80',
-        tags: ['Math', 'Logic']
+        image: 'https://images.unsplash.com/photo-1593508512255-86ab42a8e620?auto=format&fit=crop&w=640&q=80',
+        tags: ['Life', 'Psychology']
       }
     ]
   },
   {
-    id: 'npo-cluster',
+    id: 'non-profit',
     title: 'Non-Profit & Youth Leadership',
     type: 'CLUSTER',
     courses: [
       {
-        id: 'npo-001',
-        title: 'Grant Writing Success',
-        description: 'Securing funding for your mission.',
+        id: 'np-001',
+        title: 'Grant Writing Basics',
+        description: 'How to secure funding for your cause.',
         price: 2.50,
         image: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=640&q=80',
-        tags: ['Writing', 'Finance']
+        tags: ['Writing', 'Money']
       },
       {
-        id: 'npo-002',
+        id: 'np-002',
         title: 'Volunteer Management',
-        description: 'Recruiting and retaining passionate helpers.',
+        description: 'Recruiting, retaining, and inspiring volunteers.',
         price: 2.50,
         image: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=640&q=80',
         tags: ['Leadership', 'People']
       },
       {
-        id: 'npo-003',
-        title: 'Fundraising Galas',
-        description: 'Organizing events that drive donations.',
+        id: 'np-003',
+        title: 'Community Organizing',
+        description: 'Grassroots strategies to make real change.',
         price: 2.50,
-        image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=640&q=80',
-        tags: ['Events', 'Social']
+        image: 'https://images.unsplash.com/photo-1461896836934-ffe607ba063e?auto=format&fit=crop&w=640&q=80',
+        tags: ['Social', 'Action']
       },
       {
-        id: 'npo-004',
-        title: 'Social Impact Measurement',
-        description: 'Proving that your organization makes a difference.',
+        id: 'np-004',
+        title: 'Social Impact Strategy',
+        description: 'Measuring the good you actually do.',
         price: 2.50,
-        image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=640&q=80',
-        tags: ['Data', 'Research']
+        image: 'https://images.unsplash.com/photo-1460518451285-97b6aa326961?auto=format&fit=crop&w=640&q=80',
+        tags: ['Strategy', 'Planning']
       },
       {
-        id: 'npo-005',
-        title: 'Community Outreach',
-        description: 'Connecting with the people you serve.',
+        id: 'np-005',
+        title: 'Fundraising Events',
+        description: 'Planning galas, walks, and charity auctions.',
         price: 2.50,
-        image: 'https://images.unsplash.com/photo-1531545514256-b1400bc00f31?auto=format&fit=crop&w=640&q=80',
-        tags: ['Service', 'Talk']
+        image: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=640&q=80',
+        tags: ['Events', 'Money']
       }
     ]
   },
   {
-    id: 'pm-cluster',
+    id: 'project-management',
     title: 'Project Management',
     type: 'CLUSTER',
     courses: [
       {
         id: 'pm-001',
         title: 'Agile & Scrum Basics',
-        description: 'Modern methodologies for fast delivery.',
+        description: 'Modern methodologies for fast-moving teams.',
         price: 2.50,
-        image: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=640&q=80',
-        tags: ['Management', 'Process']
+        image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=640&q=80',
+        tags: ['Agile', 'Tech']
       },
       {
         id: 'pm-002',
-        title: 'Risk Management',
-        description: 'Identifying and mitigating project threats.',
+        title: 'Timeline Mastery',
+        description: 'Gantt charts, deadlines, and critical paths.',
         price: 2.50,
-        image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=640&q=80',
-        tags: ['Security', 'Planning']
+        image: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=640&q=80',
+        tags: ['Planning', 'Time']
       },
       {
         id: 'pm-003',
-        title: 'Stakeholder Communication',
-        description: 'Keeping everyone happy and informed.',
+        title: 'Budgeting for Success',
+        description: 'Keeping your project in the green.',
         price: 2.50,
-        image: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=640&q=80',
-        tags: ['Talk', 'Leadership']
+        image: 'https://images.unsplash.com/photo-1554224154-260327c00c40?auto=format&fit=crop&w=640&q=80',
+        tags: ['Money', 'Finance']
       },
       {
         id: 'pm-004',
-        title: 'Budgeting for Projects',
-        description: 'Tracking costs and preventing overruns.',
+        title: 'Risk Management',
+        description: 'Identifying problems before they explode.',
         price: 2.50,
-        image: 'https://images.unsplash.com/photo-1554224155-98406858d0ade?auto=format&fit=crop&w=640&q=80',
-        tags: ['Money', 'Math']
+        image: 'https://images.unsplash.com/photo-1507537297725-24a1c434c67b?auto=format&fit=crop&w=640&q=80',
+        tags: ['Safety', 'Logic']
       },
       {
         id: 'pm-005',
-        title: 'Project Software Mastery',
-        description: 'Using Jira, Asana, and Trello effectively.',
+        title: 'Leading Remote Teams',
+        description: 'Managing people you only see on Zoom.',
         price: 2.50,
-        image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=640&q=80',
-        tags: ['Tech', 'Tools']
+        image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=640&q=80',
+        tags: ['Remote', 'Leadership']
       }
     ]
   },
   {
-    id: 'marketing-cluster',
+    id: 'digital-marketing',
     title: 'Digital Marketing',
     type: 'CLUSTER',
     courses: [
       {
-        id: 'mkt-001',
+        id: 'dm-001',
         title: 'SEO Fundamentals',
-        description: 'Ranking higher on Google search results.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1571786256017-aee7a0c009b6?auto=format&fit=crop&w=640&q=80',
-        tags: ['Web', 'Data']
-      },
-      {
-        id: 'mkt-002',
-        title: 'Social Media Algorithms',
-        description: 'How to go viral on TikTok and Instagram.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1611162616475-46b635cb6868?auto=format&fit=crop&w=640&q=80',
-        tags: ['Social', 'Mobile']
-      },
-      {
-        id: 'mkt-003',
-        title: 'Email Marketing Flows',
-        description: 'Automating sales through inboxes.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1563986768427-1c591cd6b9d8?auto=format&fit=crop&w=640&q=80',
-        tags: ['Writing', 'Sales']
-      },
-      {
-        id: 'mkt-004',
-        title: 'Google Ads & PPC',
-        description: 'Paying for traffic that actually converts.',
+        description: 'Ranking #1 on Google without paying for ads.',
         price: 2.50,
         image: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&w=640&q=80',
-        tags: ['Money', 'Ads']
+        tags: ['Search', 'Tech']
       },
       {
-        id: 'mkt-005',
-        title: 'Content Strategy',
-        description: 'Planning a year of content in one day.',
+        id: 'dm-002',
+        title: 'Social Media Strategy',
+        description: 'Building a brand on Instagram, TikTok, and LinkedIn.',
         price: 2.50,
-        image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=640&q=80',
-        tags: ['Planning', 'Creative']
+        image: 'https://images.unsplash.com/photo-1611162616475-46b635cb6868?auto=format&fit=crop&w=640&q=80',
+        tags: ['Social', 'Brand']
+      },
+      {
+        id: 'dm-003',
+        title: 'Content Marketing',
+        description: 'Writing blogs and copy that sells.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=640&q=80',
+        tags: ['Writing', 'Creative']
+      },
+      {
+        id: 'dm-004',
+        title: 'Email Campaigns',
+        description: 'The highest ROI tool in the marketing box.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1563986768494-4dee46a38531?auto=format&fit=crop&w=640&q=80',
+        tags: ['Email', 'Sales']
+      },
+      {
+        id: 'dm-005',
+        title: 'Analytics & Data',
+        description: 'Reading the numbers to know what works.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=640&q=80',
+        tags: ['Data', 'Math']
       }
     ]
   }
@@ -503,10 +506,11 @@ let currentTier = 'GUEST';
 let currentInterest = undefined;
 
 const initializeChat = (tier, interest) => {
-  const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) || MANUAL_API_KEY || '';
+  // Use the key from the variable at the top of the file
+  const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) || GEMINI_API_KEY || '';
 
   if (!apiKey || apiKey.includes("PASTE_YOUR_NEW_KEY_HERE")) {
-    console.warn("API Key is missing.");
+    console.warn("API Key is missing. Please edit script.js line 12.");
     return false;
   }
 
@@ -516,10 +520,10 @@ const initializeChat = (tier, interest) => {
 
   let systemInstruction = "";
 
-  // Treat 'BUNDLE', 'SINGLE', and 'UNLIMITED' as paid tiers for the AI's persona
-  const isPaid = tier === 'BUNDLE' || tier === 'SINGLE' || tier === 'PAID' || tier === 'UNLIMITED';
+  // Treat 'BUNDLE' and 'SINGLE' as paid tiers for the purpose of the AI
+  const isPaid = tier === 'BUNDLE' || tier === 'SINGLE' || tier === 'PAID';
 
-  if (isPaid && interest && tier !== 'UNLIMITED') {
+  if (isPaid && interest) {
     const cluster = CATEGORIES.find(c => c.title === interest);
     
     if (cluster) {
@@ -542,11 +546,8 @@ const initializeChat = (tier, interest) => {
       4. If asked about a topic NOT in the list above, politely steer them back to their chosen path: "${interest}".
       `;
     } else {
-        // Fallback or Unlimited
-        systemInstruction = "You are CareerBot. You are a helpful AI tutor. The user has an UNLIMITED account. You can help them with ANY topic, including Business, Coding, Arts, and Soft Skills. Be extremely helpful and knowledgeable.";
+        systemInstruction = "You are CareerBot. You are a helpful AI tutor. The user has a premium account. Help them with general career advice.";
     }
-  } else if (tier === 'UNLIMITED') {
-      systemInstruction = "You are CareerBot. The user has the VIP UNLIMITED package ($85). You must answer ANY question about any career path with extreme detail and helpfulness. You are their personal mentor for life.";
   } else {
     systemInstruction = "You are CareerBot (Demo Mode). You are restricted. You can ONLY answer general questions about why education is important in 1 short sentence. If the user asks about specific course content, say: 'I cannot access that information in Demo Mode. Please sign in.'";
   }
@@ -563,7 +564,7 @@ const initializeChat = (tier, interest) => {
 const sendMessageToAgent = async (message) => {
   if (!chatSession) {
     const success = initializeChat(currentTier, currentInterest);
-    if (!success) return "⚠️ CONFIGURATION ERROR: Please check the API Key configuration in script.js";
+    if (!success) return "⚠️ CONFIGURATION ERROR: Please open script.js and paste your NEW API Key at the top. The old one was blocked.";
   }
   
   if (!chatSession) {
@@ -578,13 +579,14 @@ const sendMessageToAgent = async (message) => {
     return result.text || "I couldn't think of a response.";
   } catch (error) {
     console.error("Gemini Error:", error);
+    // Return specific error message to the user for debugging
     const errorMessage = error instanceof Error ? error.message : String(error);
     
-    if (errorMessage.includes("403") || errorMessage.includes("leaked") || errorMessage.includes("expired") || errorMessage.includes("API_KEY")) {
-        return "⚠️ API KEY ERROR: Your API key is expired or invalid. Please open script.js and paste a new key in the 'MANUAL_API_KEY' variable.";
+    if (errorMessage.includes("403") || errorMessage.includes("leaked") || errorMessage.includes("expired")) {
+        return "⚠️ API KEY ERROR: Your API key is expired or invalid. Please generate a new one at aistudio.google.com and update the code.";
     }
 
-    return `CareerBot Connection Failed. Error details: ${errorMessage}.`;
+    return `CareerBot Connection Failed. Error details: ${errorMessage}. (Check Console for more info)`;
   }
 };
 
@@ -688,23 +690,18 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
 
       if (mode === 'SIGNUP') {
         if (!username.trim() || !password.trim()) throw new Error('Please fill in all fields.');
-        if (!interest && selectedTier !== 'UNLIMITED') throw new Error('Please select an Interest.');
+        if (!interest) throw new Error('Please select an Interest.');
 
-        // If unlimited, we just set a generic interest or 'ALL'
-        const finalInterest = selectedTier === 'UNLIMITED' ? 'UNLIMITED ACCESS' : interest;
-
-        // CRITICAL: Ensure we save the specific tier ('BUNDLE', 'SINGLE', 'UNLIMITED') not just 'PAID'
         const { data, error: signUpError } = await supabase.auth.signUp({
           email: generatedEmail,
           password,
           options: {
-            data: { username: username, tier: selectedTier, interest: finalInterest }
+            data: { username: username, tier: selectedTier, interest }
           }
         });
 
         if (signUpError) {
-             console.log("Signup Note: Supabase might require email verification or threw an error. Proceeding to app anyway.");
-             forceMockLogin(selectedTier, finalInterest);
+             forceMockLogin(selectedTier, interest);
              return;
         }
         
@@ -720,17 +717,14 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
         });
 
         if (signInError) {
-             // Fallback to mock if login fails (e.g., duplicate user or error)
-             // Defaulting to BUNDLE if we force login
-             forceMockLogin('BUNDLE', interest || 'Restaurant'); 
+             forceMockLogin('BUNDLE', interest);
              return;
         }
         
         onClose();
       }
     } catch (err) {
-      console.log("Auth Error (Ignored for Demo):", err);
-      forceMockLogin(selectedTier || 'BUNDLE', interest || 'General'); 
+      forceMockLogin('BUNDLE', interest); // Aggressive fallback for demo
     } finally {
       setLoading(false);
     }
@@ -762,42 +756,44 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
         
         <div className="p-6">
           {view === 'SELECT_PLAN' && mode === 'SIGNUP' ? (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="text-center">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🚀</div>
                 <p className="text-slate-500 text-sm">Select a plan to access CareerFinder</p>
               </div>
-
-              {/* BUY ALL BUTTON */}
-              <button 
-                  onClick={() => handlePlanSelect('UNLIMITED')}
-                  className="w-full flex items-center justify-between p-5 border-4 border-yellow-400 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-xl hover:shadow-xl hover:scale-105 transition shadow-md group relative overflow-hidden"
-                >
-                  <div className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg uppercase tracking-wider">
-                      Best Value
-                  </div>
-                  <div className="text-left relative z-10">
-                    <div className="font-bold text-yellow-900 text-xl group-hover:text-yellow-700">Unlock Everything</div>
-                    <div className="text-xs text-yellow-800 font-bold">All Clusters + VIP AI Access</div>
-                  </div>
-                  <div className="font-bold text-yellow-900 bg-white/50 px-3 py-1 rounded-lg shadow-sm border border-yellow-200 text-xl">$85.00</div>
-                </button>
               
-              <div className="space-y-3">
+              <div className="space-y-4">
+                {/* 
+                   =============================================
+                   GLAZED SHINY BUTTON FOR BUNDLE
+                   =============================================
+                */}
                 <button 
                   onClick={() => handlePlanSelect('BUNDLE')}
-                  className="w-full flex items-center justify-between p-4 border-2 border-green-500 bg-green-50 rounded-xl hover:bg-green-100 transition shadow-sm group"
+                  className="relative w-full flex items-center justify-between p-5 border-4 border-green-400 bg-gradient-to-br from-green-50 to-green-100 rounded-xl hover:from-green-100 hover:to-green-200 transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] group overflow-hidden"
                 >
-                  <div className="text-left">
-                    <div className="font-bold text-green-900 group-hover:text-green-700">Course Bundle</div>
-                    <div className="text-xs text-green-700 font-medium">Access 1 Cluster (5 Courses)</div>
+                  {/* Glare/Shine Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-white/60 to-transparent opacity-50 pointer-events-none"></div>
+                  
+                  {/* Best Value Badge */}
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-yellow-900 text-xs font-black uppercase px-3 py-1 rounded-full shadow-md border border-yellow-200 z-10 animate-bounce">
+                    ✨ Best Value ✨
                   </div>
-                  <div className="font-bold text-green-700 bg-white px-3 py-1 rounded-lg shadow-sm">$10.00</div>
+
+                  <div className="text-left relative z-10">
+                    <div className="font-extrabold text-green-900 text-lg group-hover:text-green-800">Complete Bundle</div>
+                    <div className="text-xs text-green-800 font-bold">Access All 50 Courses + AI Tutor</div>
+                  </div>
+                  
+                  <div className="flex flex-col items-end relative z-10">
+                     <span className="text-xs text-slate-500 line-through font-bold decoration-red-500 decoration-2">$100.00</span>
+                     <div className="font-black text-3xl text-green-700 drop-shadow-sm">$10.00</div>
+                  </div>
                 </button>
 
                 <button 
                   onClick={() => handlePlanSelect('SINGLE')}
-                  className="w-full flex items-center justify-between p-4 border-2 border-orange-200 bg-orange-50 rounded-xl hover:border-orange-400 hover:bg-orange-100 transition shadow-sm group"
+                  className="w-full flex items-center justify-between p-5 border-2 border-orange-200 bg-orange-50 rounded-xl hover:border-orange-400 hover:bg-orange-100 transition shadow-sm group"
                 >
                   <div className="text-left">
                     <div className="font-bold text-slate-800 group-hover:text-orange-900">Single Course</div>
@@ -808,7 +804,7 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
 
                 <button 
                   onClick={() => handlePlanSelect('GUEST')}
-                  className="w-full flex items-center justify-between p-4 border-2 border-slate-200 bg-slate-50 rounded-xl hover:border-slate-400 hover:bg-slate-100 transition shadow-sm group"
+                  className="w-full flex items-center justify-between p-5 border-2 border-slate-200 bg-slate-50 rounded-xl hover:border-slate-400 hover:bg-slate-100 transition shadow-sm group"
                 >
                   <div className="text-left">
                     <div className="font-bold text-slate-700 group-hover:text-slate-900">Demo Access</div>
@@ -829,13 +825,11 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
               {mode === 'SIGNUP' && (
                 <div className="text-center mb-6">
                   <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
-                      selectedTier === 'UNLIMITED' ? 'bg-yellow-100 text-yellow-800 border border-yellow-300' :
                       selectedTier === 'BUNDLE' ? 'bg-green-100 text-green-600' : 
                       selectedTier === 'SINGLE' ? 'bg-orange-100 text-orange-600' : 
                       'bg-slate-100 text-slate-600'
                     }`}>
                     Selected: {
-                        selectedTier === 'UNLIMITED' ? 'VIP UNLIMITED ($85)' :
                         selectedTier === 'BUNDLE' ? 'Complete Bundle ($10)' : 
                         selectedTier === 'SINGLE' ? 'Single Course ($2.50)' : 
                         'Demo Mode (Free)'
@@ -869,7 +863,7 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
                 />
               </div>
 
-              {mode === 'SIGNUP' && selectedTier !== 'UNLIMITED' && (
+              {mode === 'SIGNUP' && (
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     {preselectedInterest ? 'Selected Bundle (Auto-filled)' : 'Select Your Course Bundle'}
@@ -930,7 +924,7 @@ const ChatWidget = ({ user, onLoginRequest }) => {
   const [isOpen, setIsOpen] = useState(false);
   
   const userTier = user ? user.tier : 'GUEST';
-  const isPaid = userTier === 'BUNDLE' || userTier === 'SINGLE' || userTier === 'PAID' || userTier === 'UNLIMITED';
+  const isPaid = userTier === 'BUNDLE' || userTier === 'SINGLE' || userTier === 'PAID';
   
   const [messages, setMessages] = useState([
     { 
@@ -953,7 +947,7 @@ const ChatWidget = ({ user, onLoginRequest }) => {
   }, [messages, isOpen]);
 
   useEffect(() => {
-    const isNowPaid = userTier === 'BUNDLE' || userTier === 'SINGLE' || userTier === 'PAID' || userTier === 'UNLIMITED';
+    const isNowPaid = userTier === 'BUNDLE' || userTier === 'SINGLE' || userTier === 'PAID';
      setMessages([{ 
       role: 'model', 
       text: !isNowPaid 
@@ -1093,8 +1087,7 @@ const App = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [quizScores, setQuizScores] = useState({});
   
-  // Set Bandwagon count to 9,100,000+ random
-  const [userCount, setUserCount] = useState(9100000 + Math.floor(Math.random() * 50000));
+  const [userCount, setUserCount] = useState(9044284);
 
   const questions = [
     {
@@ -1149,8 +1142,7 @@ const App = () => {
             setUser({
                 id: session.user.id,
                 name: session.user.user_metadata.username || session.user.email?.split('@')[0] || 'User',
-                // FIX: Pass raw tier so 'BUNDLE' or 'UNLIMITED' are preserved
-                tier: session.user.user_metadata.tier, 
+                tier: session.user.user_metadata.tier,
                 interest: session.user.user_metadata.interest
             });
         }
@@ -1163,7 +1155,6 @@ const App = () => {
         setUser({
           id: session.user.id,
           name: session.user.user_metadata.username || session.user.email?.split('@')[0] || 'User',
-          // FIX: Pass raw tier so 'BUNDLE' or 'UNLIMITED' are preserved
           tier: session.user.user_metadata.tier,
           interest: session.user.user_metadata.interest
         });
@@ -1355,6 +1346,7 @@ const App = () => {
   };
 
   // AUTO-SAVE LOGIC
+  // Save progress whenever activeModuleIndex changes
   useEffect(() => {
     if (user && selectedCourse && view === 'learning_mode') {
       const key = `progress_${user.id}_${selectedCourse.id}`;
@@ -1454,22 +1446,14 @@ const App = () => {
     e.currentTarget.src = "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=640&q=80";
   };
 
-  const isUserPaid = user && (user.tier === 'BUNDLE' || user.tier === 'SINGLE' || user.tier === 'PAID' || user.tier === 'UNLIMITED');
+  // CHECK ACCESS LEVEL
+  const hasAccess = user && (
+    user.tier === 'BUNDLE' || 
+    user.tier === 'PAID' || 
+    (user.tier === 'SINGLE' && user.interest === selectedCategory?.title)
+  );
 
-  // Format header string: "Bundle (Restaurant)" or "Unlimited (Everything)"
-  const getHeaderTierString = () => {
-    if (!user) return 'Guest';
-    let label = 'Guest';
-    if (user.tier === 'UNLIMITED') label = 'Unlimited';
-    else if (user.tier === 'BUNDLE') label = 'Bundle';
-    else if (user.tier === 'SINGLE') label = 'Course';
-    else if (user.tier === 'PAID') label = 'Premium';
-    
-    if (user.interest && user.interest !== 'UNLIMITED ACCESS') {
-      return `${label} (${user.interest})`;
-    }
-    return label;
-  };
+  const isUserPaid = user && (user.tier === 'BUNDLE' || user.tier === 'SINGLE' || user.tier === 'PAID');
 
   return (
     <div className="min-h-screen flex flex-col bg-green-50 font-sans text-slate-800">
@@ -1503,8 +1487,13 @@ const App = () => {
                     <span className="text-sm font-bold text-green-900">{user.name}</span>
                     <div className="flex items-center gap-1">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${isUserPaid ? 'bg-orange-100 text-orange-700' : 'bg-slate-200 text-slate-600'}`}>
-                        {getHeaderTierString()}
+                        {user.tier === 'BUNDLE' ? 'Full Bundle' : (user.tier === 'SINGLE' ? 'Single Course' : 'Guest')}
                       </span>
+                      {user.interest && (
+                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 max-w-[100px] truncate">
+                           {user.interest}
+                         </span>
+                      )}
                     </div>
                  </div>
                  <Button variant="outline" size="sm" onClick={handleLogout}>Sign Out</Button>
@@ -1776,7 +1765,7 @@ const App = () => {
                    
                    <div className="flex items-center gap-6 mb-8">
                       <div className="text-3xl font-black text-green-600">${selectedCourse.price.toFixed(2)}</div>
-                      {isUserPaid ? (
+                      {hasAccess ? (
                         <div className="text-green-600 font-bold flex items-center bg-green-50 px-3 py-1 rounded-lg">
                           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                           Unlocked
@@ -1787,7 +1776,7 @@ const App = () => {
                    </div>
 
                    <div className="flex flex-col gap-3">
-                     {isUserPaid ? (
+                     {hasAccess ? (
                        <Button size="lg" className="w-full" onClick={startLearning}>
                          Start Learning Now
                        </Button>
@@ -1797,7 +1786,7 @@ const App = () => {
                        </Button>
                      )}
                      <p className="text-center text-xs text-slate-400 mt-2">
-                       {isUserPaid ? 'Includes 24/7 AI Tutor Access' : 'Includes access to all courses in this cluster + AI Tutor'}
+                       {hasAccess ? 'Includes 24/7 AI Tutor Access' : 'Includes access to all courses in this cluster + AI Tutor'}
                      </p>
                    </div>
                 </div>

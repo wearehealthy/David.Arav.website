@@ -7,33 +7,36 @@ import { createClient } from '@supabase/supabase-js';
 // ==========================================
 // 🛡️ GA CONFIGURATION (OBSCURED) 🛡️
 // ==========================================
-// DO NOT TOUCH THE LINES BELOW - SYSTEM INTEGRITY
 const _x0 = 'A'; const _n1 = 'xc8';
 const _x1 = 'I'; const _n2 = 'd9f';
 const _x2 = 'z'; const _n3 = '99s';
 const _x3 = 'a'; const _n4 = 'vv1';
 const _x4 = 'S'; const _n5 = 'aa2';
 const _x5 = 'y'; const _n6 = 'bb3';
-// API KEY INJECTION
+// FULL KEY PART B INJECTED
 const GA_SECRET_PAYLOAD = "DTcFJA5cLFeIfbjM4Lup54CYVhGGYUa3Q"; 
 
 const getGA = () => {
-    // Check environment first
     if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
         return process.env.API_KEY;
     }
-    // Check local storage
     const local = localStorage.getItem('GA_KEY');
     if (local) return local;
 
-    // Assemble obfuscated key
     const header = _x0 + _x1 + _x2 + _x3 + _x4 + _x5;
     if (GA_SECRET_PAYLOAD.includes("PASTE")) return "";
     return header + GA_SECRET_PAYLOAD;
 };
 
+// Safe Supabase Init
 const supabaseUrl = 'https://bwjjfnkuqnravvfytxbf.supabase.co';
 const supabaseKey = 'sb_publishable_9z5mRwy-X0zERNX7twZzPw_RdskfL8s';
+let supabase = null;
+try {
+  supabase = createClient(supabaseUrl, supabaseKey);
+} catch (e) {
+  console.error("Supabase failed to init:", e);
+}
 
 // ==========================================
 // 1. DATA & CONSTANTS
@@ -342,123 +345,98 @@ const CATEGORIES = [
 // 2. SERVICES
 // ==========================================
 
-const supabase = createClient(supabaseUrl, supabaseKey);
-
 // --- GEMINI SERVICE ---
 
 let chatSession = null;
 let currentTier = 'GUEST';
 let currentInterest = undefined;
+let currentContext = null;
 
-const initializeChat = (tier, interest) => {
+const initializeChat = (tier, interest, context) => {
   const k = getGA();
 
   if (!k || k.includes("PASTE")) {
-    console.warn("GA Key is missing or invalid.");
+    console.warn("GA Key is missing.");
     return false;
   }
 
   currentTier = tier;
   currentInterest = interest;
+  currentContext = context;
   const ai = new GoogleGenAI({ apiKey: k });
 
   let systemInstruction = "";
 
   if (tier === 'ALL') {
     // ------------------------------------
-    // ALL ACCESS / LIFETIME LOGIC
+    // ALL ACCESS LOGIC
     // ------------------------------------
-    const allCurriculum = CATEGORIES.map(cluster => 
-      `\n[CLUSTER: ${cluster.title}]\n` +
-      cluster.courses.map(c => `- ${c.title}: ${c.description} (${c.tags.join(', ')})`).join('\n')
-    ).join('\n');
+    systemInstruction = `You are CareerBot, an expert academic advisor with LIFETIME ACCESS permissions.
+    You know EVERYTHING about all courses. 
+    You are enthusiastic, helpful, and never refuse a topic related to the curriculum.`;
 
-    systemInstruction = `You are CareerBot, an expert academic advisor and tutor with UNLIMITED ACCESS.
-    
-    You have full access to the entire university curriculum across ALL disciplines:
-    ${allCurriculum}
-    
-    RULES:
-    1. Answer ANY question about ANY of the fields above with deep expertise.
-    2. Be encouraging, enthusiastic, and helpful.
-    3. You are a "Lifetime Access" tutor, so you never refuse a topic related to these courses.
-    `;
-
-  } else if (tier === 'BUNDLE' || tier === 'SINGLE' || tier === 'PAID') {
+  } else if ((tier === 'BUNDLE' || tier === 'SINGLE' || tier === 'PAID') && interest) {
     // ------------------------------------
-    // BUNDLE / PAID LOGIC
+    // PAID BUNDLE / SINGLE LOGIC
     // ------------------------------------
-    const cluster = CATEGORIES.find(c => c.title === interest);
+    systemInstruction = `You are CareerBot, an expert tutor for "${interest}".
     
-    if (cluster) {
-      const curriculum = cluster.courses.map(c => 
-        `- Course Title: "${c.title}"\n  Description: ${c.description}\n  Topics/Tags: ${c.tags.join(', ')}`
-      ).join('\n\n');
+    The user OWNS this content.
+    You can teach them specific details, answer technical questions, and help with assignments related to ${interest}.
+    
+    If they ask about a DIFFERENT major (e.g. they own Cooking but ask about Coding), politely say:
+    "I specialize in ${interest}. Please upgrade to All-Access to ask about other fields."
+    but you can still give very general 1-sentence advice.`;
 
-      systemInstruction = `You are CareerBot, an expert specialized academic advisor for the "${interest}" career path.
-      
-      You have access to the following curriculum:
-      ${curriculum}
-      
-      RULES:
-      1. Answer questions about "${interest}" deeply and helpfully.
-      2. You can also answer GENERAL career advice questions (resumes, interviews, motivation) regardless of the topic.
-      3. CRITICAL: If the user asks about a specific technical topic OUTSIDE of "${interest}" (e.g. asking about "Coding" when they bought "Cooking"), you must POLITELY REFUSE.
-         - Say: "I specialize in ${interest}. To ask about that topic, please purchase the relevant course bundle or the All-Access Pass."
-      `;
-    } else {
-        systemInstruction = "You are CareerBot. The user has a premium account, but the course data is missing. Help them with general career advice.";
-    }
   } else {
     // ------------------------------------
-    // DEMO / GUEST LOGIC
+    // GUEST LOGIC (UPDATED)
     // ------------------------------------
-    systemInstruction = `You are CareerBot (Demo Mode).
-    
-    ALLOWED TOPICS:
-    - General career advice (e.g., "How to write a resume", "How to prepare for an interview", "How to find my passion").
-    - Motivation and soft skills.
-    - Questions about what courses are available.
-    
-    FORBIDDEN TOPICS:
-    - Specific technical knowledge, code solutions, recipes, or deep course content.
+    // We now check if there is a 'context' (User is viewing a specific course page)
+    if (context) {
+       systemInstruction = `You are CareerBot (Demo Mode). The user is currently looking at the "${context}" course/cluster.
+       
+       YOU CAN:
+       - Explain what "${context}" is about.
+       - Talk about career prospects and salaries in "${context}".
+       - Be hype and encouraging about "${context}".
+       - Answer general career questions.
 
-    If the user asks a FORBIDDEN question, you must say:
-    "I cannot access specific course content in Demo Mode. Please sign in or purchase a course bundle to unlock my full knowledge base."
-    
-    DO NOT be a robot. Be helpful with general advice, but strict on paid content.
-    `;
+       YOU CANNOT:
+       - Teach specific lessons or give detailed technical tutorials for "${context}".
+       - Provide the actual paid content.
+       
+       If asked to teach a specific lesson, say: "I can't teach the full lesson in Demo Mode, but I can tell you that ${context} is an amazing field because..."
+       `;
+    } else {
+       systemInstruction = `You are CareerBot (Demo Mode). 
+       The user is on the home page.
+       Answer general career questions (resumes, interviews).
+       Encourage them to explore a course path.`;
+    }
   }
 
   chatSession = ai.chats.create({
     model: 'gemini-2.5-flash',
-    config: {
-      systemInstruction: systemInstruction,
-    },
+    config: { systemInstruction },
   });
   return true;
 };
 
 const sendMessageToAgent = async (message) => {
   if (!chatSession) {
-    const success = initializeChat(currentTier, currentInterest);
-    if (!success) return "⚠️ API KEY MISSING. Please edit script.js and paste your API key in the GA_SECRET_PAYLOAD variable.";
+    const success = initializeChat(currentTier, currentInterest, currentContext);
+    if (!success) return "⚠️ API Key Error. Check script.js";
   }
   
-  if (!chatSession) {
-      return "CareerBot Error: Service not initialized.";
-  }
+  if (!chatSession) return "Service not initialized.";
 
   try {
-    const result = await chatSession.sendMessage({
-      message: message
-    });
-    
+    const result = await chatSession.sendMessage({ message });
     return result.text || "I couldn't think of a response.";
   } catch (error) {
     console.error("Gemini Error:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return `CareerBot Connection Failed. Error: ${errorMessage}`;
+    return "Connection Failed. Please try again.";
   }
 };
 
@@ -466,43 +444,22 @@ const sendMessageToAgent = async (message) => {
 // 3. COMPONENTS
 // ==========================================
 
-const Button = ({ 
-  children, 
-  variant = 'primary', 
-  size = 'md', 
-  className = '', 
-  ...props 
-}) => {
+const Button = ({ children, variant = 'primary', size = 'md', className = '', ...props }) => {
   const baseStyles = "inline-flex items-center justify-center rounded-lg font-bold transition-all transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
-  
   const variants = {
     primary: "bg-green-500 text-white hover:bg-green-600 focus:ring-green-400 shadow-md hover:shadow-lg",
     secondary: "bg-orange-400 text-white hover:bg-orange-500 focus:ring-orange-300 shadow-md",
     outline: "border-2 border-green-200 bg-white text-green-700 hover:bg-green-50 focus:ring-green-400",
     ghost: "text-green-700 hover:bg-green-100",
   };
-
-  const sizes = {
-    sm: "px-3 py-1.5 text-xs",
-    md: "px-6 py-2.5 text-sm",
-    lg: "px-8 py-4 text-base",
-  };
-
-  return (
-    <button 
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  );
+  const sizes = { sm: "px-3 py-1.5 text-xs", md: "px-6 py-2.5 text-sm", lg: "px-8 py-4 text-base" };
+  return <button className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`} {...props}>{children}</button>;
 };
 
 const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
   const [view, setView] = useState('FORM');
   const [mode, setMode] = useState(initialMode);
   const [selectedTier, setSelectedTier] = useState(null);
-  
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [interest, setInterest] = useState('');
@@ -512,20 +469,9 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
-      setError('');
-      setUsername('');
-      setPassword('');
-      if (preselectedInterest) {
-        setInterest(preselectedInterest);
-      } else {
-        setInterest('');
-      }
-      
-      if (initialMode === 'SIGNUP') {
-        setView('SELECT_PLAN');
-      } else {
-        setView('FORM');
-      }
+      setError(''); setUsername(''); setPassword('');
+      setInterest(preselectedInterest || '');
+      setView(initialMode === 'SIGNUP' ? 'SELECT_PLAN' : 'FORM');
     }
   }, [isOpen, initialMode, preselectedInterest]);
 
@@ -537,265 +483,91 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
     setError('');
   };
 
-  const generateEmail = (user) => {
-    const cleanUser = user.trim().toLowerCase().replace(/\s+/g, '');
-    return `${cleanUser}@careerfinder.app`;
-  };
-
   const forceMockLogin = (tier, interestVal) => {
-    console.warn("Using Local Mode Fallback");
-    const safeTier = tier || 'PAID';
-    const userData = {
-      username: username || 'Student',
-      tier: safeTier,
-      interest: interestVal
-    };
-    
+    const safeTier = tier || 'BUNDLE';
+    const userData = { username: username || 'Student', tier: safeTier, interest: interestVal };
     localStorage.setItem('careerfinder_mock_user', JSON.stringify(userData));
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
+    setTimeout(() => window.location.reload(), 500);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
-      const generatedEmail = generateEmail(username);
-
+      const email = `${username.trim().toLowerCase().replace(/\s+/g, '')}@careerfinder.app`;
       if (mode === 'SIGNUP') {
-        if (!username.trim() || !password.trim()) throw new Error('Please fill in all fields.');
-        // If ALL access, interest is optional/irrelevant, otherwise required
-        if (selectedTier !== 'ALL' && !interest) throw new Error('Please select an Interest.');
-
+        if (!username || !password) throw new Error('Fill all fields');
+        if (selectedTier !== 'ALL' && selectedTier !== 'GUEST' && !interest) throw new Error('Select Interest');
+        const finalInterest = selectedTier === 'ALL' ? 'All Access' : interest;
+        
         const { data, error: signUpError } = await supabase.auth.signUp({
-          email: generatedEmail,
-          password,
-          options: {
-            data: { username: username, tier: selectedTier, interest: selectedTier === 'ALL' ? 'All Access' : interest }
-          }
+          email, password,
+          options: { data: { username, tier: selectedTier, interest: finalInterest } }
         });
-
         if (signUpError || !data.session) {
-             console.log("Signup Fallback Triggered");
-             forceMockLogin(selectedTier, selectedTier === 'ALL' ? 'All Access' : interest);
+             forceMockLogin(selectedTier, finalInterest);
              return;
         }
-        
         onClose();
-
       } else {
-        // LOGIN
-        if (!username.trim() || !password.trim()) throw new Error('Please enter username and password.');
-
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-            email: generatedEmail,
-            password
-        });
-
+        if (!username || !password) throw new Error('Enter credentials');
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) {
-             console.log("Login Fallback Triggered");
-             // Default to BUNDLE/PAID if we don't know
-             forceMockLogin('BUNDLE', interest || 'General');
+             forceMockLogin('BUNDLE', interest || 'General'); 
              return;
         }
-        
         onClose();
       }
     } catch (err) {
-      console.log("Unexpected error, falling back");
       forceMockLogin(selectedTier || 'BUNDLE', interest || 'General');
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleMode = () => {
-    const newMode = mode === 'LOGIN' ? 'SIGNUP' : 'LOGIN';
-    setMode(newMode);
-    setError('');
-    if (newMode === 'SIGNUP') {
-      setView('SELECT_PLAN');
-    } else {
-      setView('FORM');
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-        
         <div className="flex justify-between items-center p-4 border-b border-slate-100">
-          <h3 className="text-lg font-bold text-slate-900">
-            {mode === 'LOGIN' ? 'Welcome Back' : (view === 'SELECT_PLAN' ? 'Choose Your Path' : 'Create Profile')}
-          </h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
+          <h3 className="text-lg font-bold text-slate-900">{mode === 'LOGIN' ? 'Welcome Back' : (view === 'SELECT_PLAN' ? 'Choose Plan' : 'Profile')}</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">✕</button>
         </div>
-        
         <div className="p-6">
           {view === 'SELECT_PLAN' && mode === 'SIGNUP' ? (
-            <div className="space-y-6">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🚀</div>
-                <p className="text-slate-500 text-sm">Select a plan to access CareerFinder</p>
-              </div>
-              
-              <div className="space-y-3">
-                
-                {/* ALL ACCESS */}
-                <button 
-                  onClick={() => handlePlanSelect('ALL')}
-                  className="w-full flex items-center justify-between p-4 border-2 border-indigo-500 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition shadow-md hover:shadow-lg group relative overflow-hidden"
-                >
-                  <div className="absolute top-0 right-0 bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">BEST VALUE</div>
-                  <div className="text-left">
-                    <div className="font-bold text-indigo-900 text-lg group-hover:text-indigo-700">Lifetime Access</div>
-                    <div className="text-xs text-indigo-700 font-medium">Unlock EVERYTHING + Expert AI</div>
-                  </div>
-                  <div className="font-bold text-indigo-700 bg-white px-3 py-1 rounded-lg shadow-sm">$85.00</div>
-                </button>
-
-                {/* BUNDLE */}
-                <button 
-                  onClick={() => handlePlanSelect('BUNDLE')}
-                  className="w-full flex items-center justify-between p-4 border-2 border-green-500 bg-green-50 rounded-xl hover:bg-green-100 transition shadow-sm group"
-                >
-                  <div className="text-left">
-                    <div className="font-bold text-green-900 text-lg group-hover:text-green-700">Course Bundle</div>
-                    <div className="text-xs text-green-700 font-medium">1 Career Path + AI Tutor</div>
-                  </div>
-                  <div className="font-bold text-green-700 bg-white px-3 py-1 rounded-lg shadow-sm">$10.00</div>
-                </button>
-
-                {/* SINGLE */}
-                <button 
-                  onClick={() => handlePlanSelect('SINGLE')}
-                  className="w-full flex items-center justify-between p-4 border-2 border-orange-200 bg-orange-50 rounded-xl hover:border-orange-400 hover:bg-orange-100 transition shadow-sm group"
-                >
-                  <div className="text-left">
-                    <div className="font-bold text-slate-800 group-hover:text-orange-900">Single Course</div>
-                    <div className="text-xs text-slate-500 group-hover:text-orange-800">Access Only One Course</div>
-                  </div>
-                  <div className="font-bold text-orange-600 bg-white px-3 py-1 rounded-lg shadow-sm">$2.50</div>
-                </button>
-
-                {/* GUEST */}
-                <button 
-                  onClick={() => handlePlanSelect('GUEST')}
-                  className="w-full flex items-center justify-between p-4 border-2 border-slate-200 bg-slate-50 rounded-xl hover:border-slate-400 hover:bg-slate-100 transition shadow-sm group"
-                >
-                  <div className="text-left">
-                    <div className="font-bold text-slate-700 group-hover:text-slate-900">Demo Access</div>
-                    <div className="text-xs text-slate-500">Limited Preview</div>
-                  </div>
-                  <div className="font-bold text-slate-600 bg-white px-3 py-1 rounded-lg shadow-sm">Free</div>
-                </button>
-              </div>
-
-              <div className="text-center pt-2">
-                <button onClick={toggleMode} className="text-sm text-green-600 hover:text-green-700 font-medium hover:underline">
-                  Already have an account? Log In
-                </button>
-              </div>
+            <div className="space-y-4">
+              <button onClick={() => handlePlanSelect('ALL')} className="w-full flex justify-between p-4 border-2 border-indigo-500 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition relative overflow-hidden group">
+                 <div className="text-left"><div className="font-bold text-indigo-900">Lifetime Access</div><div className="text-xs text-indigo-700">Everything + Expert AI</div></div>
+                 <div className="font-bold text-indigo-700 bg-white px-2 py-1 rounded">$85.00</div>
+              </button>
+              <button onClick={() => handlePlanSelect('BUNDLE')} className="w-full flex justify-between p-4 border-2 border-green-500 bg-green-50 rounded-xl hover:bg-green-100 transition group">
+                 <div className="text-left"><div className="font-bold text-green-900">Course Bundle</div><div className="text-xs text-green-700">1 Path + AI Tutor</div></div>
+                 <div className="font-bold text-green-700 bg-white px-2 py-1 rounded">$10.00</div>
+              </button>
+              <button onClick={() => handlePlanSelect('SINGLE')} className="w-full flex justify-between p-4 border-2 border-orange-200 bg-orange-50 rounded-xl hover:border-orange-400 hover:bg-orange-100 transition group">
+                 <div className="text-left"><div className="font-bold text-slate-800">Single Course</div><div className="text-xs text-slate-500">One Course Only</div></div>
+                 <div className="font-bold text-orange-600 bg-white px-2 py-1 rounded">$2.50</div>
+              </button>
+              <button onClick={() => handlePlanSelect('GUEST')} className="w-full flex justify-between p-4 border-2 border-slate-200 bg-slate-50 rounded-xl hover:border-slate-400 hover:bg-slate-100 transition group">
+                 <div className="text-left"><div className="font-bold text-slate-700">Demo Access</div><div className="text-xs text-slate-500">Preview Only</div></div>
+                 <div className="font-bold text-slate-600 bg-white px-2 py-1 rounded">Free</div>
+              </button>
+              <div className="text-center pt-2"><button onClick={() => { setMode('LOGIN'); setView('FORM'); }} className="text-sm text-green-600 font-medium hover:underline">Already have an account?</button></div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
-              {mode === 'SIGNUP' && (
-                <div className="text-center mb-6">
-                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
-                      selectedTier === 'ALL' ? 'bg-indigo-100 text-indigo-700' :
-                      selectedTier === 'BUNDLE' ? 'bg-green-100 text-green-600' : 
-                      selectedTier === 'SINGLE' ? 'bg-orange-100 text-orange-600' : 
-                      'bg-slate-100 text-slate-600'
-                    }`}>
-                    Selected: {
-                        selectedTier === 'ALL' ? 'Lifetime Access ($85)' :
-                        selectedTier === 'BUNDLE' ? 'Complete Bundle ($10)' : 
-                        selectedTier === 'SINGLE' ? 'Single Course ($2.50)' : 
-                        'Demo Mode (Free)'
-                    }
-                  </span>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
-                <input 
-                  type="text" 
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-shadow shadow-sm bg-slate-50 focus:bg-white"
-                  placeholder="FutureCEO123"
-                  autoFocus
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                <input 
-                  type="password" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-shadow shadow-sm bg-slate-50 focus:bg-white"
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-
+              <div><label className="block text-sm font-medium mb-1">Username</label><input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full px-4 py-2 border rounded-xl" required /></div>
+              <div><label className="block text-sm font-medium mb-1">Password</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-xl" required /></div>
               {mode === 'SIGNUP' && selectedTier !== 'ALL' && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    {preselectedInterest ? 'Selected Bundle (Auto-filled)' : 'Select Your Course Bundle'}
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={interest}
-                      onChange={(e) => setInterest(e.target.value)}
-                      disabled={!!preselectedInterest}
-                      className={`appearance-none w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-slate-50 focus:bg-white text-slate-700 font-medium transition-shadow shadow-sm cursor-pointer ${preselectedInterest ? 'bg-green-50 text-green-800 border-green-200' : ''}`}
-                      required
-                    >
-                       <option value="" disabled>-- Choose a Cluster --</option>
-                       {CATEGORIES.map(cat => (
-                         <option key={cat.id} value={cat.title}>{cat.title}</option>
-                       ))}
-                    </select>
-                    {!preselectedInterest && (
-                      <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
+                  <label className="block text-sm font-medium mb-1">Interest</label>
+                  <select value={interest} onChange={(e) => setInterest(e.target.value)} disabled={!!preselectedInterest} className="w-full px-4 py-2 border rounded-xl" required>
+                     <option value="" disabled>-- Choose --</option>
+                     {CATEGORIES.map(c => <option key={c.id} value={c.title}>{c.title}</option>)}
+                  </select>
                 </div>
               )}
-
-              {error && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{error}</p>}
-
-              <div className="pt-2 flex flex-col gap-3">
-                <div className="flex gap-3">
-                  {mode === 'SIGNUP' && (
-                    <Button type="button" variant="ghost" onClick={() => setView('SELECT_PLAN')} className="w-1/3">
-                      Back
-                    </Button>
-                  )}
-                  <Button type="submit" className={mode === 'SIGNUP' ? "w-2/3" : "w-full"} disabled={loading}>
-                    {loading ? 'Processing...' : (mode === 'SIGNUP' ? 'Create Account' : 'Log In')}
-                  </Button>
-                </div>
-                
-                <div className="text-center">
-                  <button type="button" onClick={toggleMode} className="text-sm text-green-600 hover:text-green-700 font-medium hover:underline">
-                    {mode === 'SIGNUP' ? 'Already have an account? Log In' : "Don't have an account? Sign Up"}
-                  </button>
-                </div>
-              </div>
+              <Button type="submit" className="w-full" disabled={loading}>{loading ? '...' : (mode === 'SIGNUP' ? 'Join' : 'Login')}</Button>
             </form>
           )}
         </div>
@@ -804,819 +576,211 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
   );
 };
 
-const ChatWidget = ({ user, onLoginRequest }) => {
+const ChatWidget = ({ user, onLoginRequest, activeContext }) => {
   const [isOpen, setIsOpen] = useState(false);
-  
   const userTier = user ? user.tier : 'GUEST';
-  const isPaid = userTier === 'BUNDLE' || userTier === 'SINGLE' || userTier === 'PAID' || userTier === 'ALL';
   
-  const [messages, setMessages] = useState([
-    { 
-      role: 'model', 
-      text: !isPaid 
-        ? "Hi! I'm CareerBot (Demo). I can answer general career questions, but I cannot help with specific coursework until you upgrade." 
-        : (userTier === 'ALL' ? "Hi! I'm CareerBot! I have access to EVERYTHING. Ask me anything!" : "Hi! I'm CareerBot! I'm ready to help you plan your future!") 
-    }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
+  // Re-init chat when context changes (e.g. user clicks a course)
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isOpen]);
+    const tier = user ? user.tier : 'GUEST';
+    const interest = user?.interest;
+    // This ensures the AI knows what page the user is on
+    initializeChat(tier, interest, activeContext);
+    
+    // Update initial greeting
+    let greeting = "";
+    if (tier === 'ALL') greeting = "Hi! I have Lifetime Access. Ask me anything!";
+    else if (activeContext && tier === 'GUEST') greeting = `Hi! I see you're looking at ${activeContext}. I can give you a quick overview!`;
+    else if (activeContext) greeting = `Hi! Ready to learn about ${activeContext}?`;
+    else greeting = "Hi! I'm CareerBot. How can I help you today?";
 
-  useEffect(() => {
-    const isNowPaid = userTier === 'BUNDLE' || userTier === 'SINGLE' || userTier === 'PAID' || userTier === 'ALL';
-     setMessages([{ 
-      role: 'model', 
-      text: !isNowPaid 
-        ? "Hi! I'm CareerBot (Demo). I can help with resumes and general advice!" 
-        : (userTier === 'ALL' ? "Hi! I'm CareerBot! I know everything in the curriculum. Ask away!" : "Hi! I'm CareerBot! Ask me specific questions about your course!") 
-    }]);
-  }, [userTier]);
+    setMessages([{ role: 'model', text: greeting }]);
+  }, [user, activeContext]);
+
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, isOpen]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
-
     const userMsg = { role: 'user', text: input };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
-
     const responseText = await sendMessageToAgent(input);
-    
     setMessages(prev => [...prev, { role: 'model', text: responseText }]);
     setLoading(false);
   };
 
-  const handleToggle = () => {
-    if (!user) {
-      onLoginRequest();
-    } else {
-      setIsOpen(!isOpen);
-    }
-  };
-
   return (
     <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end pointer-events-none">
-      
-      {isOpen && user && (
-        <div className="pointer-events-auto mb-4 w-[350px] sm:w-[400px] h-[500px] bg-white rounded-2xl shadow-2xl border-2 border-green-100 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-10">
+      {isOpen && (
+        <div className="pointer-events-auto mb-4 w-[350px] h-[500px] bg-white rounded-2xl shadow-2xl border-2 border-green-100 flex flex-col overflow-hidden">
           <div className="p-4 bg-green-500 text-white flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-lg">🤖</div>
-              <div className="flex flex-col">
-                <span className="font-bold leading-tight">CareerBot</span>
-                <span className="text-[10px] uppercase tracking-wider opacity-90">
-                  {userTier === 'ALL' ? 'Lifetime Access' : (isPaid ? 'Specialist Agent' : 'Demo Agent')}
-                </span>
-              </div>
+              <div className="text-xl">🤖</div>
+              <div className="flex flex-col"><span className="font-bold">CareerBot</span><span className="text-[10px] opacity-90">{userTier}</span></div>
             </div>
-            <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-            </button>
+            <button onClick={() => setIsOpen(false)}>✕</button>
           </div>
-
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-green-50/50">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
-                  msg.role === 'user' 
-                    ? 'bg-green-600 text-white rounded-br-none' 
-                    : 'bg-white text-slate-800 border border-slate-100 shadow-sm rounded-bl-none'
-                }`}>
-                  {msg.text}
-                </div>
+                <div className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm ${msg.role === 'user' ? 'bg-green-600 text-white' : 'bg-white shadow-sm border border-slate-100'}`}>{msg.text}</div>
               </div>
             ))}
-            {loading && (
-              <div className="flex justify-start">
-                <div className="bg-white border border-slate-100 rounded-2xl rounded-bl-none px-4 py-3 shadow-sm">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce delay-100"></div>
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce delay-200"></div>
-                  </div>
-                </div>
-              </div>
-            )}
+            {loading && <div className="text-slate-400 text-xs ml-4">Thinking...</div>}
             <div ref={messagesEndRef} />
           </div>
-
-          <div className="p-3 bg-white border-t border-slate-100">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Ask CareerBot..."
-                className="flex-1 px-4 py-2 bg-slate-50 border-0 rounded-full focus:ring-2 focus:ring-green-500 text-sm"
-              />
-              <button 
-                onClick={handleSend}
-                disabled={loading || !input.trim()}
-                className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 disabled:opacity-50"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-              </button>
-            </div>
-          </div>
+          <div className="p-3 bg-white border-t"><div className="flex gap-2"><input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} className="flex-1 px-4 py-2 bg-slate-50 rounded-full border" placeholder="Ask away..." /><button onClick={handleSend} className="bg-green-500 text-white px-3 py-2 rounded-full">➤</button></div></div>
         </div>
       )}
-
-      <button 
-        onClick={handleToggle}
-        className="pointer-events-auto shadow-xl hover:shadow-2xl transition-all hover:scale-105 active:scale-95 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-bold flex items-center gap-2"
-      >
-        {isOpen && user ? (
-             <>
-               <span className="text-xl">✕</span>
-               <span>Close</span>
-             </>
-           ) : (
-             <>
-               <span className="text-xl">🤖</span>
-               <span>Chat with CareerBot</span>
-             </>
-           )}
+      <button onClick={() => user ? setIsOpen(!isOpen) : onLoginRequest()} className="pointer-events-auto shadow-xl bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-bold flex items-center gap-2 transition-transform hover:scale-105">
+        <span className="text-xl">🤖</span><span>{isOpen ? 'Close' : 'Chat'}</span>
       </button>
     </div>
   );
 };
 
-// ==========================================
-// 4. MAIN APP
-// ==========================================
+// Error Boundary for Grey Screen Protection
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError(error) { return { hasError: true }; }
+  componentDidCatch(error, errorInfo) { console.error("Uncaught error:", error, errorInfo); }
+  render() {
+    if (this.state.hasError) {
+      return <div className="p-10 text-center"><h1>Something went wrong.</h1><p>Please refresh the page.</p></div>;
+    }
+    return this.props.children;
+  }
+}
 
 const App = () => {
   const [user, setUser] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [authMode, setAuthMode] = useState('LOGIN');
   const [preselectedInterest, setPreselectedInterest] = useState(undefined);
-  
   const [view, setView] = useState('landing');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
-  const [activeModuleIndex, setActiveModuleIndex] = useState(0);
-
-  const [showQuizResult, setShowQuizResult] = useState(false);
-  const [quizResult, setQuizResult] = useState(null);
-  const [quizActive, setQuizActive] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [quizScores, setQuizScores] = useState({});
-  
-  // COUNTER STARTS AT 9.1 MILLION
   const [userCount, setUserCount] = useState(9100000);
 
-  const questions = [
-    {
-      text: "When you visualize your ideal workday, what are you doing?",
-      options: [
-        { text: "Building structure & organizing chaos", tags: ['Business', 'Logic', 'Structure', 'Management', 'Finance'] },
-        { text: "Connecting with & leading people", tags: ['Leadership', 'People', 'Service', 'Society', 'Talk'] },
-        { text: "Creating something visual or auditory", tags: ['Art', 'Design', 'Creative', 'Media', 'Audio', 'Music'] }
-      ]
-    },
-    {
-      text: "How do you prefer to solve complex problems?",
-      options: [
-        { text: "Analyze data and follow the facts", tags: ['Math', 'Coding', 'Research', 'Science', 'Security'] },
-        { text: "Collaborate and brainstorm with a team", tags: ['Therapy', 'Teams', 'Events', 'Food'] },
-        { text: "Experiment until something works", tags: ['Startup', 'Instrument', 'Photo', 'Cafe'] }
-      ]
-    },
-    {
-      text: "Which of these feels like a superpower you want?",
-      options: [
-        { text: "Unshakeable Stability & Wealth", tags: ['Money', 'Security', 'Business'] },
-        { text: "Healing & Helping Others", tags: ['Health', 'Medical', 'Service', 'Teaching', 'Kids'] },
-        { text: "Unbounded Expression", tags: ['Video', 'Voice', 'Singing', '3D', 'Web'] }
-      ]
-    }
-  ];
+  // Track what the user is looking at for the AI
+  const activeContext = useMemo(() => {
+    if (selectedCourse) return selectedCourse.title;
+    if (selectedCategory) return selectedCategory.title;
+    return null;
+  }, [selectedCourse, selectedCategory]);
 
-  // Auth Listener
   useEffect(() => {
-    // 0. Check for Mock User (Fallback for school project)
     const checkUser = async () => {
-        // Priority 1: Check Local Mock
         const mock = localStorage.getItem('careerfinder_mock_user');
-        
-        // Priority 2: Check Supabase
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session) {
-            console.log("Supabase Session Found");
-            setUser({
-                id: session.user.id,
-                name: session.user.user_metadata.username || session.user.email?.split('@')[0] || 'User',
-                tier: session.user.user_metadata.tier,
-                interest: session.user.user_metadata.interest
-            });
-            // If we have a real session, clear the mock to avoid confusion
-            localStorage.removeItem('careerfinder_mock_user');
-        } else if (mock) {
-            console.log("Mock User Found");
-            try {
-                const u = JSON.parse(mock);
+        if (mock) {
+            try { setUser(JSON.parse(mock)); } catch (e) {}
+        }
+        if (supabase) {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
                 setUser({
-                    id: 'mock-123',
-                    name: u.username,
-                    tier: u.tier,
-                    interest: u.interest
+                    id: session.user.id,
+                    name: session.user.user_metadata.username || 'User',
+                    tier: session.user.user_metadata.tier,
+                    interest: session.user.user_metadata.interest
                 });
-            } catch (e) {
-                localStorage.removeItem('careerfinder_mock_user');
             }
+            supabase.auth.onAuthStateChange((_event, session) => {
+              if (session) {
+                setUser({
+                  id: session.user.id,
+                  name: session.user.user_metadata.username,
+                  tier: session.user.user_metadata.tier,
+                  interest: session.user.user_metadata.interest
+                });
+                setShowLoginModal(false);
+              }
+            });
         }
     };
-    
     checkUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        setUser({
-          id: session.user.id,
-          name: session.user.user_metadata.username || session.user.email?.split('@')[0] || 'User',
-          tier: session.user.user_metadata.tier,
-          interest: session.user.user_metadata.interest
-        });
-        setShowLoginModal(false); 
-        setPreselectedInterest(undefined);
-        localStorage.removeItem('careerfinder_mock_user');
-      } else {
-        // Only reset if we don't have a mock user
-        if (!localStorage.getItem('careerfinder_mock_user')) {
-             setUser(null);
-             setView('landing'); 
-        }
-      }
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
-    const tier = user ? user.tier : 'GUEST';
-    const interest = user?.interest;
-    initializeChat(tier, interest);
-  }, [user]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-        setUserCount(prev => prev + Math.floor(Math.random() * 15) + 5);
-    }, 1500);
+    const interval = setInterval(() => setUserCount(p => p + Math.floor(Math.random() * 15) + 5), 1500);
     return () => clearInterval(interval);
   }, []);
 
-   // --- Dynamic Module Generation ---
-  const currentModules = useMemo(() => {
-    if (!selectedCourse) return [];
-    
-    const t = selectedCourse.tags;
-    const mainTag = t[0] || "General";
-    const secTag = t[1] || "Advanced";
-
-    return [
-      {
-        title: `Introduction to ${selectedCourse.title}`,
-        duration: "15 mins",
-        content: (
-          <React.Fragment>
-            <p className="mb-4 text-lg leading-relaxed">
-              Welcome to <strong>{selectedCourse.title}</strong>. This is the beginning of your journey into the world of {mainTag}. 
-              Whether you are here to build a career or explore a passion, understanding the fundamental landscape of this industry is crucial.
-            </p>
-            <h3 className="text-xl font-bold text-slate-800 mt-6 mb-3">Why {mainTag} Matters</h3>
-            <p className="mb-4">
-              In today's rapidly evolving economy, {mainTag} remains a cornerstone of innovation and service. 
-              By mastering these skills, you position yourself not just as a participant, but as a leader.
-            </p>
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 my-6">
-              <h4 className="font-bold text-blue-900">Learning Objective</h4>
-              <p className="text-blue-800 text-sm">By the end of this module, you will be able to articulate the core value proposition of {selectedCourse.title} and identify key career opportunities.</p>
-            </div>
-          </React.Fragment>
-        )
-      },
-      {
-        title: `Core Principles of ${mainTag}`,
-        duration: "45 mins",
-        content: (
-          <React.Fragment>
-            <p className="mb-4 text-lg leading-relaxed">
-              Before we can run, we must walk. This module breaks down the essential theories that underpin {selectedCourse.title}.
-            </p>
-            <h3 className="text-xl font-bold text-slate-800 mt-6 mb-3">The Three Pillars</h3>
-            <ul className="list-disc pl-5 space-y-2 mb-6">
-              <li><strong>Theory:</strong> Understanding the 'Why' behind the 'How'.</li>
-              <li><strong>Application:</strong> Using {secTag} in real-world scenarios.</li>
-              <li><strong>Ethics:</strong> maintaining high standards in {mainTag}.</li>
-            </ul>
-            <p>
-              Many beginners skip these steps, leading to fragile foundations. We will ensure you have a robust understanding of the basics.
-            </p>
-          </React.Fragment>
-        )
-      },
-      {
-        title: `Tools & Techniques: ${secTag}`,
-        duration: "60 mins",
-        content: (
-          <React.Fragment>
-            <p className="mb-4 text-lg leading-relaxed">
-              It is time to get your hands dirty. In this module, we explore the industry-standard tools used by professionals in {mainTag}.
-            </p>
-            <h3 className="text-xl font-bold text-slate-800 mt-6 mb-3">Required Equipment</h3>
-            <p className="mb-4">
-              You don't need the most expensive gear to start, but you do need reliable tools. We will review the best options for {secTag} at every budget level.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
-               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                 <div className="font-bold text-slate-700 mb-1">Beginner Setup</div>
-                 <div className="text-sm text-slate-500">Focus on accessibility and ease of use.</div>
-               </div>
-               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                 <div className="font-bold text-slate-700 mb-1">Pro Setup</div>
-                 <div className="text-sm text-slate-500">Focus on efficiency, scale, and durability.</div>
-               </div>
-            </div>
-          </React.Fragment>
-        )
-      },
-      {
-        title: `Advanced Strategies in ${selectedCourse.title}`,
-        duration: "90 mins",
-        content: (
-          <React.Fragment>
-            <p className="mb-4 text-lg leading-relaxed">
-              Now that you have the basics, let's look at how experts differentiate themselves. 
-              Advanced {mainTag} involves critical thinking and pattern recognition.
-            </p>
-            <h3 className="text-xl font-bold text-slate-800 mt-6 mb-3">Case Study Analysis</h3>
-            <p className="mb-4">
-              We will examine a real-world scenario where standard methods failed, and creative application of {secTag} saved the day.
-            </p>
-            <p className="mb-4">
-              <strong>Key Takeaway:</strong> Rules are meant to be understood so they can be effectively broken when innovation is required.
-            </p>
-          </React.Fragment>
-        )
-      },
-      {
-        title: "Final Assessment & Career Roadmap",
-        duration: "30 mins",
-        content: (
-          <React.Fragment>
-            <p className="mb-4 text-lg leading-relaxed">
-              Congratulations on reaching the final module. You have covered the spectrum of {selectedCourse.title}.
-            </p>
-            <h3 className="text-xl font-bold text-slate-800 mt-6 mb-3">Next Steps</h3>
-            <p className="mb-6">
-              To turn this knowledge into a career, you must build a portfolio. Start small, document your work in {mainTag}, and network with others in {secTag}.
-            </p>
-            <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
-              <div className="text-4xl mb-2">🎓</div>
-              <h4 className="font-bold text-green-900 text-lg">Certificate of Completion</h4>
-              <p className="text-green-800 text-sm mb-4">You are ready to take the final quiz to earn your credential.</p>
-              <Button onClick={() => alert("Certificate Downloaded!")}>Download Certificate</Button>
-            </div>
-          </React.Fragment>
-        )
-      }
-    ];
-  }, [selectedCourse]);
-
-  const openAuthModal = (mode, interestToSelect) => {
-    setAuthMode(mode);
-    if (interestToSelect) {
-      setPreselectedInterest(interestToSelect);
-    } else {
-      setPreselectedInterest(undefined);
-    }
-    setShowLoginModal(true);
-  };
-
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    if (supabase) await supabase.auth.signOut();
     localStorage.removeItem('careerfinder_mock_user');
     setUser(null);
     setView('landing');
   };
 
-  const goHome = () => {
-    setView('landing');
-    setSelectedCategory(null);
-    resetQuiz();
-  };
-
-  const goToClusters = () => {
-    setView('clusters_list');
-    setSelectedCategory(null);
-    resetQuiz();
-  };
-
-  const openCluster = (category) => {
-    setSelectedCategory(category);
-    setView('cluster_courses');
-    resetQuiz();
-  };
-
-  const openCourse = (course) => {
-    setSelectedCourse(course);
-    setView('course_details');
-  };
-
-  // AUTO-SAVE LOGIC
-  // Save progress whenever activeModuleIndex changes
-  useEffect(() => {
-    if (user && selectedCourse && view === 'learning_mode') {
-      const key = `progress_${user.id}_${selectedCourse.id}`;
-      localStorage.setItem(key, activeModuleIndex.toString());
-      console.log("Auto-saved progress:", key, activeModuleIndex);
-    }
-  }, [activeModuleIndex, user, selectedCourse, view]);
-
-  // Load progress when starting learning
-  const startLearning = () => {
-    if (user && selectedCourse) {
-       const key = `progress_${user.id}_${selectedCourse.id}`;
-       const saved = localStorage.getItem(key);
-       if (saved) {
-         setActiveModuleIndex(parseInt(saved));
-       } else {
-         setActiveModuleIndex(0);
-       }
-    } else {
-       setActiveModuleIndex(0);
-    }
-    setView('learning_mode');
-    window.scrollTo(0, 0);
-  };
-
-  const nextModule = () => {
-    if (activeModuleIndex < currentModules.length - 1) {
-      setActiveModuleIndex(prev => prev + 1);
-      window.scrollTo(0, 0);
-    }
-  };
-
-  const prevModule = () => {
-    if (activeModuleIndex > 0) {
-      setActiveModuleIndex(prev => prev - 1);
-      window.scrollTo(0, 0);
-    }
-  };
-
-  const resetQuiz = () => {
-    setShowQuizResult(false);
-    setQuizResult(null);
-    setQuizActive(false);
-    setCurrentQuestion(0);
-    setQuizScores({});
-  };
-
-  const startQuiz = () => {
-    resetQuiz();
-    setQuizActive(true);
-  };
-
-  const handleQuizAnswer = (tags) => {
-    const newScores = { ...quizScores };
-    tags.forEach(tag => {
-      newScores[tag] = (newScores[tag] || 0) + 1;
-    });
-    setQuizScores(newScores);
-
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(prev => prev + 1);
-    } else {
-      finishQuiz(newScores);
-    }
-  };
-
-  const finishQuiz = (finalScores) => {
-    if (!selectedCategory) return;
-    
-    let bestCourse = selectedCategory.courses[0];
-    let maxScore = -1;
-
-    selectedCategory.courses.forEach(course => {
-      let courseScore = 0;
-      course.tags.forEach(tag => {
-        if (finalScores[tag]) courseScore += finalScores[tag] * 2;
-        Object.keys(finalScores).forEach(scoreTag => {
-          if (tag.includes(scoreTag) || scoreTag.includes(tag)) {
-            courseScore += 0.5;
-          }
-        });
-      });
-      courseScore += Math.random();
-
-      if (courseScore > maxScore) {
-        maxScore = courseScore;
-        bestCourse = course;
-      }
-    });
-
-    setQuizResult(bestCourse);
-    setQuizActive(false);
-    setShowQuizResult(true);
-  };
-
-  const handleImageError = (e) => {
-    e.currentTarget.src = "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=640&q=80";
-  };
-
-  const isUserPaid = user && (user.tier === 'BUNDLE' || user.tier === 'SINGLE' || user.tier === 'PAID' || user.tier === 'ALL');
-
   return (
     <div className="min-h-screen flex flex-col bg-green-50 font-sans text-slate-800">
-      {/* Navigation */}
       <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-green-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={goHome}>
-            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg transform hover:rotate-6 transition-transform">C</div>
-            <span className="font-bold text-green-800 text-xl hidden sm:block">CareerFinder</span>
-          </div>
-          
-          <nav className="hidden md:flex gap-10 text-base font-bold text-slate-500">
-            <button 
-              onClick={goHome} 
-              className={`hover:text-green-600 transition-colors ${view === 'landing' ? 'text-green-600' : ''}`}
-            >
-              Home
-            </button>
-            <button 
-              onClick={goToClusters} 
-              className={`hover:text-green-600 transition-colors ${view === 'clusters_list' || view === 'cluster_courses' ? 'text-green-600' : ''}`}
-            >
-              Course Groups
-            </button>
-          </nav>
-
-          <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+          <div className="font-bold text-green-800 text-xl cursor-pointer" onClick={() => setView('landing')}>CareerFinder</div>
+          <div className="flex gap-4">
             {user ? (
               <div className="flex items-center gap-4">
-                 <div className="flex flex-col items-end">
-                    <span className="text-sm font-bold text-green-900">{user.name}</span>
-                    <div className="flex items-center gap-1">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                        user.tier === 'ALL' ? 'bg-indigo-100 text-indigo-700' :
-                        isUserPaid ? 'bg-orange-100 text-orange-700' : 'bg-slate-200 text-slate-600'
-                      }`}>
-                        {user.tier === 'ALL' ? 'Lifetime' : (isUserPaid ? 'Bundle' : 'Guest')}
-                      </span>
-                      {user.interest && (
-                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 max-w-[100px] truncate">
-                           {user.interest}
-                         </span>
-                      )}
-                    </div>
+                 <div className="text-right">
+                    <div className="text-sm font-bold">{user.name}</div>
+                    <div className="text-xs text-green-600">{user.tier === 'ALL' ? 'Lifetime' : user.tier}</div>
                  </div>
                  <Button variant="outline" size="sm" onClick={handleLogout}>Sign Out</Button>
               </div>
             ) : (
-              <div className="flex gap-2">
-                <Button variant="ghost" onClick={() => openAuthModal('LOGIN')}>Log In</Button>
-                <Button onClick={() => openAuthModal('SIGNUP')}>Sign Up</Button>
-              </div>
+              <Button onClick={() => { setAuthMode('SIGNUP'); setShowLoginModal(true); }}>Get Started</Button>
             )}
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        
-        {/* LANDING PAGE */}
+      <main className="flex-1 max-w-7xl mx-auto px-4 py-10 w-full">
         {view === 'landing' && (
-          <div className="flex flex-col items-center justify-center py-10 animate-in fade-in duration-700">
-            <div className="text-center max-w-4xl mx-auto mb-16">
-              <span className="inline-block py-1 px-3 rounded-full bg-orange-100 text-orange-600 text-sm font-bold mb-6">
-                ✨ SEIZE YOUR DESTINY
-              </span>
-              <h1 className="text-5xl md:text-7xl font-extrabold text-green-900 tracking-tight mb-8 leading-snug pb-2">
-                Learn what you <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-400">Love</span>.<br/>
-                Do what makes you <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-500">Happy</span>.
-              </h1>
-              <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-                Welcome to CareerFinder! We have organized all knowledge into convenient <strong>Course Groups</strong> to help you find your path easily.
-                <br/>Our <strong className="text-slate-800">CareerBot</strong> is waiting to help you!
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" onClick={goToClusters}>Browse Course Groups</Button>
-              </div>
+          <div className="text-center py-10">
+            <h1 className="text-6xl font-extrabold text-green-900 mb-6">Find Your Future.</h1>
+            <p className="text-xl text-slate-600 mb-8">AI-Powered Career Guidance for everyone.</p>
+            <div className="flex justify-center gap-4 mb-16">
+                <Button size="lg" onClick={() => setView('clusters_list')}>Browse Courses</Button>
             </div>
-
-            <div className="w-full max-w-3xl mx-auto mb-12 bg-red-600 text-white p-6 rounded-lg shadow-2xl border-4 border-yellow-400 animate-pulse text-center transform rotate-1">
-              <h2 className="text-2xl md:text-3xl font-black uppercase tracking-widest text-yellow-300 leading-none mb-1">WARNING: LAST CHANCE TO BOARD.</h2>
-              <p className="font-bold text-lg md:text-xl">
-                The train to success is right here. Don't feel sad when it's gone.
-              </p>
+            <div className="bg-slate-800 text-white p-8 rounded-2xl inline-block">
+                <div className="text-5xl font-mono text-green-400">{userCount.toLocaleString()}</div>
+                <div className="text-sm uppercase tracking-widest mt-2">Users Joined</div>
             </div>
-
-            <div className="bg-orange-400 -rotate-2 rounded-xl p-12 shadow-xl mb-16 max-w-4xl mx-auto transform hover:rotate-0 transition-transform cursor-default border-4 border-white">
-              <div className="text-center text-white font-black text-4xl md:text-6xl tracking-wide uppercase drop-shadow-md leading-tight">
-                Skilled and bold.<br/>
-                Worth your weight in gold.
-              </div>
-            </div>
-
-            <div className="text-center mb-16">
-               <div className="inline-block bg-slate-800 p-8 rounded-3xl shadow-2xl border-b-8 border-slate-600">
-                  <div className="text-5xl md:text-7xl font-black text-green-400 tabular-nums font-mono mb-2">
-                      {userCount.toLocaleString()}
-                  </div>
-                  <div className="text-white font-bold uppercase tracking-[0.1em] text-sm">
-                      Smart Winners Joined Already
-                  </div>
-                  <div className="text-slate-400 text-xs mt-2 italic">
-                      You are the only one left behind.
-                  </div>
-               </div>
-            </div>
-
-            <div className="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-               <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-2xl shadow-xl text-white transform hover:scale-105 transition-transform flex flex-col">
-                 <div className="text-4xl mb-4">👑</div>
-                 <h3 className="text-xl font-extrabold mb-3 uppercase tracking-tight">ABSOLUTE CERTAINTY</h3>
-                 <p className="text-green-100 text-sm leading-relaxed flex-1">
-                   Why gamble with your future? Our <strong>Flawless</strong> algorithms eliminate <strong>Risk</strong>. Gain <strong>Guaranteed</strong> success through <strong>Scientific</strong> precision. Don't just hope—<strong>KNOW</strong> your destiny with <strong>Mathematical Perfection</strong>.
-                 </p>
-               </div>
-               
-               <div className="bg-gradient-to-br from-orange-400 to-amber-500 p-6 rounded-2xl shadow-xl text-white transform hover:scale-105 transition-transform delay-75 flex flex-col">
-                 <div className="text-4xl mb-4">🏆</div>
-                 <h3 className="text-xl font-extrabold mb-3 uppercase tracking-tight">ELITE STATUS</h3>
-                 <p className="text-orange-100 text-sm leading-relaxed flex-1">
-                   Leave <strong>Mediocrity</strong> behind. Join the <strong>Winners</strong> circle. Secure <strong>Unlimited</strong> potential and command the <strong>Respect</strong> you deserve. Be the <strong>Leader</strong> everyone admires. Claim your <strong>Victory</strong> today.
-                 </p>
-               </div>
-
-               <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-6 rounded-2xl shadow-xl text-white transform hover:scale-105 transition-transform delay-150 flex flex-col">
-                 <div className="text-4xl mb-4">⚡</div>
-                 <h3 className="text-xl font-extrabold mb-3 uppercase tracking-tight">INSTANT MASTERY</h3>
-                 <p className="text-blue-100 text-sm leading-relaxed flex-1">
-                   Skip the <strong>Struggle</strong>. Achieve <strong>Effortless</strong> results while others work hard. Our system is your <strong>Secret Weapon</strong> for <strong>Automatic</strong> success. Unlock <strong>Genius</strong> level insight in seconds. It's almost <strong>Magic</strong>.
-                 </p>
-               </div>
-            </div>
-
-            <div className="max-w-4xl mx-auto mt-16 mb-16 px-4">
-              <h2 className="text-3xl font-bold text-center text-green-900 mb-8">Trusted by Famous People</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-blue-500 transform hover:-translate-y-1 transition-transform">
-                    <p className="italic text-slate-600 mb-4 text-lg">"I wish I had this when I started. It is the only way to be the best you can be. Don't go to space without it."</p>
-                    <div className="font-bold text-slate-900 flex items-center gap-2">
-                      <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs">🚀</div>
-                      Elon M., Tech Leader
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-2xl shadow-lg border-l-4 border-pink-500 transform hover:-translate-y-1 transition-transform">
-                    <p className="italic text-slate-600 mb-4 text-lg">"I was scared by too many choices until CareerFinder told me who to be. It looked at who I am and gave me a plan. Now I don't have to worry about my future."</p>
-                    <div className="font-bold text-slate-900 flex items-center gap-2">
-                      <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-xs">🎤</div>
-                      Taylor S., Pop Star
-                    </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="fixed top-1/4 left-10 w-72 h-72 bg-green-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 -z-10 animate-pulse"></div>
-            <div className="fixed bottom-1/4 right-10 w-72 h-72 bg-orange-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 -z-10 animate-pulse delay-75"></div>
           </div>
         )}
 
         {view === 'clusters_list' && (
-           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-             <div className="text-center mb-12">
-               <h2 className="text-3xl font-bold text-green-900 mb-2">Course Groups</h2>
-               <p className="text-slate-500">Select a group to view available courses</p>
-             </div>
-
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {CATEGORIES.map((category) => (
-                   <div 
-                      key={category.id} 
-                      onClick={() => openCluster(category)}
-                      className="cursor-pointer group rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 bg-white border border-slate-100 overflow-hidden flex flex-col"
-                   >
-                     <div className="h-44 overflow-hidden relative bg-slate-200">
-                        <img 
-                          src={category.courses[0]?.image} 
-                          onError={handleImageError}
-                          alt={category.title} 
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                        />
-                        <div className="absolute top-3 right-3 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-green-900 shadow-md">
-                          $10.00
-                        </div>
-                     </div>
-                     <div className="p-6 flex-1 flex flex-col">
-                        <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:text-green-600 transition-colors">{category.title}</h3>
-                        <p className="text-slate-500 text-sm mb-4">{category.courses.length} Courses Available</p>
-                        
-                        <div className="mt-auto flex items-center text-green-600 font-bold text-sm">
-                            <span>Explore Path</span>
-                            <svg className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                        </div>
-                     </div>
-                   </div>
-                ))}
-             </div>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {CATEGORIES.map(cat => (
+                 <div key={cat.id} onClick={() => { setSelectedCategory(cat); setView('cluster_courses'); }} className="bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 transition">
+                    <img src={cat.courses[0].image} className="h-40 w-full object-cover" />
+                    <div className="p-6">
+                       <h3 className="text-xl font-bold mb-2">{cat.title}</h3>
+                       <p className="text-sm text-slate-500">{cat.courses.length} Courses</p>
+                    </div>
+                 </div>
+              ))}
            </div>
         )}
 
         {view === 'cluster_courses' && selectedCategory && (
-          <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-             <button onClick={goToClusters} className="mb-6 flex items-center text-slate-500 hover:text-green-600 transition font-medium">
-               <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-               Back to Groups
-             </button>
-
-             <div className="flex flex-col md:flex-row justify-between items-end mb-8 border-b border-green-200 pb-4 gap-4">
-                <div>
-                  <h2 className="text-3xl font-bold text-green-900">{selectedCategory.title}</h2>
-                  <p className="text-slate-500 text-sm mt-1">Explore the available paths below</p>
-                </div>
-                {!quizActive && !showQuizResult && (
-                  <Button variant="secondary" onClick={startQuiz} className="animate-bounce hover:animate-none">
-                    ⚡ Not sure? Find Your Match!
-                  </Button>
-                )}
-             </div>
-
-             {quizActive && (
-               <div className="mb-8 p-8 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-3xl border border-indigo-200 shadow-xl animate-in zoom-in-95">
-                 <div className="max-w-2xl mx-auto text-center">
-                    <span className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-4 block">Question {currentQuestion + 1} of {questions.length}</span>
-                    <h3 className="text-2xl font-bold text-slate-800 mb-8">{questions[currentQuestion].text}</h3>
-                    
-                    <div className="grid grid-cols-1 gap-4">
-                      {questions[currentQuestion].options.map((option, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => handleQuizAnswer(option.tags)}
-                          className="p-4 bg-white rounded-xl border-2 border-transparent hover:border-indigo-400 hover:shadow-md transition-all text-left group"
-                        >
-                          <span className="font-medium text-slate-700 group-hover:text-indigo-700">{option.text}</span>
-                        </button>
-                      ))}
-                    </div>
-                 </div>
-               </div>
-             )}
-
-             {showQuizResult && quizResult && (
-               <div className="mb-8 p-6 bg-gradient-to-r from-orange-100 to-orange-200 rounded-2xl border-2 border-orange-300 animate-in zoom-in shadow-xl relative">
-                 <button onClick={resetQuiz} className="absolute top-4 right-4 text-orange-400 hover:text-orange-600">✕</button>
-                 <div className="flex flex-col md:flex-row gap-6 items-center">
-                   <div className="flex-1 text-center md:text-left">
-                     <div className="inline-block bg-white text-orange-600 font-bold px-3 py-1 rounded-full text-xs mb-2 shadow-sm">
-                       🎯 Recommended for You
-                     </div>
-                     <h3 className="text-2xl font-bold text-slate-800 mb-2">Based on your personality, try: {quizResult.title}</h3>
-                     <p className="text-slate-700 mb-4">{quizResult.description}</p>
-                     <Button onClick={() => openCourse(quizResult)} className="bg-slate-900 text-white hover:bg-slate-700">
-                       View This Course
-                     </Button>
-                   </div>
-                   <div className="w-full md:w-1/3 h-40 rounded-xl overflow-hidden shadow-lg">
-                      <img src={quizResult.image} alt={quizResult.title} className="w-full h-full object-cover" onError={handleImageError} />
-                   </div>
-                 </div>
-               </div>
-             )}
-             
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {selectedCategory.courses.map((course) => (
-                  <div key={course.id} className="group bg-white rounded-2xl border-2 border-transparent hover:border-green-200 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full overflow-hidden transform hover:-translate-y-1">
-                    <div className="h-48 overflow-hidden relative">
-                       <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" onError={handleImageError} />
-                       <div className="absolute top-3 right-3 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-green-900 shadow-md">
-                         ${course.price.toFixed(2)}
-                       </div>
-                    </div>
-                    <div className="p-6 flex-1 flex flex-col">
-                      <div className="flex gap-2 mb-3 flex-wrap">
-                        {course.tags.map(tag => (
-                          <span key={tag} className="text-[10px] uppercase font-bold tracking-wider px-2 py-1 bg-slate-100 text-slate-500 rounded-md">{tag}</span>
-                        ))}
-                      </div>
-                      <h3 className="text-lg font-bold text-slate-900 mb-2 leading-tight group-hover:text-green-600 transition-colors">{course.title}</h3>
-                      <p className="text-slate-500 text-sm mb-6 flex-1">{course.description}</p>
-                      
-                      <Button onClick={() => openCourse(course)} variant="outline" className="w-full group-hover:bg-green-500 group-hover:text-white group-hover:border-green-500">
-                        View Details
-                      </Button>
+          <div>
+             <button onClick={() => setView('clusters_list')} className="mb-6 text-slate-500 hover:text-green-600">← Back</button>
+             <h2 className="text-3xl font-bold mb-8">{selectedCategory.title}</h2>
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {selectedCategory.courses.map(course => (
+                  <div key={course.id} className="bg-white rounded-2xl shadow p-6 flex flex-col">
+                    <h3 className="font-bold text-lg mb-2">{course.title}</h3>
+                    <p className="text-sm text-slate-500 mb-4 flex-1">{course.description}</p>
+                    <div className="flex justify-between items-center mt-4">
+                       <span className="font-bold text-green-600">${course.price.toFixed(2)}</span>
+                       <Button size="sm" onClick={() => { setSelectedCourse(course); setView('course_details'); }}>View</Button>
                     </div>
                   </div>
                 ))}
@@ -1625,204 +789,30 @@ const App = () => {
         )}
 
         {view === 'course_details' && selectedCourse && (
-          <div className="animate-in fade-in slide-in-from-right-8 duration-500 max-w-5xl mx-auto">
-            <button onClick={() => selectedCategory ? openCluster(selectedCategory) : goToClusters()} className="mb-6 flex items-center text-slate-500 hover:text-green-600 transition font-medium">
-               <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-               Back to Course List
-             </button>
-
-            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
-              <div className="grid grid-cols-1 md:grid-cols-2">
-                <div className="h-64 md:h-full relative bg-slate-200">
-                   <img src={selectedCourse.image} alt={selectedCourse.title} className="w-full h-full object-cover" onError={handleImageError} />
-                   <div className="absolute inset-0 bg-black/10"></div>
-                </div>
-                
-                <div className="p-8 md:p-12 flex flex-col justify-center">
-                   <div className="flex gap-2 mb-4">
-                      {selectedCourse.tags.map(tag => (
-                        <span key={tag} className="text-xs font-bold uppercase tracking-widest px-3 py-1 bg-green-100 text-green-700 rounded-full">{tag}</span>
-                      ))}
-                   </div>
-                   <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-6">{selectedCourse.title}</h1>
-                   <p className="text-lg text-slate-600 mb-8 leading-relaxed">{selectedCourse.description}</p>
+          <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+             <div className="grid grid-cols-1 md:grid-cols-2">
+                <img src={selectedCourse.image} className="h-full w-full object-cover" />
+                <div className="p-10 flex flex-col justify-center">
+                   <h1 className="text-4xl font-bold mb-4">{selectedCourse.title}</h1>
+                   <p className="text-lg text-slate-600 mb-6">{selectedCourse.description}</p>
+                   <div className="text-3xl font-black text-green-600 mb-8">${selectedCourse.price.toFixed(2)}</div>
                    
-                   <div className="flex items-center gap-6 mb-8">
-                      <div className="text-3xl font-black text-green-600">${selectedCourse.price.toFixed(2)}</div>
-                      {isUserPaid ? (
-                        <div className="text-green-600 font-bold flex items-center bg-green-50 px-3 py-1 rounded-lg">
-                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                          Unlocked
-                        </div>
-                      ) : (
-                        <div className="text-slate-400 text-sm font-medium">One-time purchase</div>
-                      )}
-                   </div>
-
-                   <div className="flex flex-col gap-3">
-                     {isUserPaid ? (
-                       <Button size="lg" className="w-full" onClick={startLearning}>
-                         Start Learning Now
-                       </Button>
-                     ) : (
-                       <Button size="lg" className="w-full" onClick={() => openAuthModal('SIGNUP', selectedCategory?.title)}>
-                         Unlock Full Access
-                       </Button>
-                     )}
-                     <p className="text-center text-xs text-slate-400 mt-2">
-                       {isUserPaid ? 'Includes 24/7 AI Tutor Access' : 'Includes access to all courses in this cluster + AI Tutor'}
-                     </p>
-                   </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-12 bg-indigo-900 rounded-3xl p-8 md:p-12 text-white relative overflow-hidden">
-               <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-                 <div className="flex-1">
-                   <h3 className="text-2xl font-bold mb-4">Have questions about this course?</h3>
-                   <p className="text-indigo-200 mb-6">Our AI CareerBot has studied {selectedCourse.title} in detail. It can help you understand if this is the right path for you or explain complex topics instantly.</p>
-                   <Button variant="secondary" onClick={() => document.querySelector('.fixed.bottom-6.right-6 button')?.click()}>
-                     Chat with CareerBot
-                   </Button>
-                 </div>
-                 <div className="text-9xl opacity-20 transform rotate-12">🤖</div>
-               </div>
-               
-               <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-indigo-500 rounded-full mix-blend-overlay filter blur-3xl opacity-20"></div>
-               <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-purple-500 rounded-full mix-blend-overlay filter blur-3xl opacity-20"></div>
-            </div>
-          </div>
-        )}
-
-        {/* LEARNING MODE - COURSE PLAYER */}
-        {view === 'learning_mode' && selectedCourse && currentModules.length > 0 && (
-          <div className="animate-in fade-in zoom-in-95 duration-500 flex flex-col lg:flex-row gap-8 max-w-6xl mx-auto">
-             
-             {/* Sidebar */}
-             <div className="w-full lg:w-1/4">
-                <button onClick={() => setView('course_details')} className="mb-6 flex items-center text-slate-500 hover:text-green-600 transition font-medium">
-                  <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                  Exit Course
-                </button>
-
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden sticky top-24">
-                   <div className="bg-green-50 p-4 border-b border-green-100">
-                      <h4 className="font-bold text-green-900 text-sm uppercase tracking-wide">Course Syllabus</h4>
-                   </div>
-                   <div className="divide-y divide-slate-50 max-h-[60vh] overflow-y-auto">
-                      {currentModules.map((module, idx) => (
-                        <div 
-                           key={idx} 
-                           onClick={() => {
-                             setActiveModuleIndex(idx);
-                             window.scrollTo(0, 0);
-                           }}
-                           className={`p-4 cursor-pointer hover:bg-slate-50 transition-colors border-l-4 ${
-                             activeModuleIndex === idx 
-                               ? 'bg-indigo-50 border-indigo-500' 
-                               : 'border-transparent'
-                           }`}
-                        >
-                           <div className="flex justify-between items-center mb-1">
-                             <div className={`text-xs font-bold ${activeModuleIndex === idx ? 'text-indigo-500' : 'text-slate-400'}`}>
-                               Module {idx + 1}
-                             </div>
-                             <div className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500">
-                               {module.duration}
-                             </div>
-                           </div>
-                           <div className={`font-medium text-sm ${activeModuleIndex === idx ? 'text-indigo-900' : 'text-slate-700'}`}>
-                             {module.title}
-                           </div>
-                        </div>
-                      ))}
-                   </div>
-                </div>
-             </div>
-
-             {/* Main Content */}
-             <div className="flex-1">
-                <div className="bg-white rounded-3xl shadow-lg border border-slate-100 p-8 md:p-12">
-                   <div className="flex items-center gap-3 mb-6">
-                     <span className="inline-block bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">
-                       Module {activeModuleIndex + 1}
-                     </span>
-                     <span className="text-slate-400 text-sm">/ {currentModules.length} Modules</span>
-                   </div>
-                   
-                   <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-6">
-                     {currentModules[activeModuleIndex].title}
-                   </h1>
-                   
-                   <div className="prose prose-lg text-slate-600 max-w-none">
-                      <img 
-                        src={selectedCourse.image} 
-                        className="w-full h-64 object-cover rounded-2xl mb-8 shadow-sm" 
-                        onError={handleImageError} 
-                        alt="Course Header"
-                      />
-                      
-                      {/* Dynamic Content */}
-                      {currentModules[activeModuleIndex].content}
-
-                      {/* AI Assistance Box - Replaces Generic Pro Tip */}
-                      <div className="bg-green-50 border border-green-100 rounded-xl p-6 flex flex-col sm:flex-row items-start gap-4 mt-12">
-                         <div className="text-3xl">🤖</div>
-                         <div>
-                           <h4 className="font-bold text-green-900 mb-1">Need Clarification?</h4>
-                           <p className="text-sm text-green-800 mb-3">
-                             CareerBot is reading along with you. If you don't understand specific terms in this module, just ask!
-                           </p>
-                           <button 
-                             onClick={() => (document.querySelector('.fixed.bottom-6.right-6 button') as HTMLElement)?.click()}
-                             className="text-xs font-bold bg-white text-green-700 px-3 py-2 rounded-lg shadow-sm hover:shadow hover:bg-green-50 transition"
-                           >
-                             Ask CareerBot
-                           </button>
-                         </div>
-                      </div>
-                   </div>
-
-                   <div className="mt-12 flex justify-between items-center border-t border-slate-100 pt-8">
-                      <Button 
-                        variant="outline" 
-                        onClick={prevModule} 
-                        disabled={activeModuleIndex === 0}
-                      >
-                        ← Previous
+                   {user && (user.tier === 'ALL' || user.interest === selectedCategory?.title || user.interest === 'All Access') ? (
+                      <Button size="lg" className="w-full">Start Learning (Unlocked)</Button>
+                   ) : (
+                      <Button size="lg" className="w-full" onClick={() => { setAuthMode('SIGNUP'); setPreselectedInterest(selectedCategory?.title); setShowLoginModal(true); }}>
+                         Unlock Now
                       </Button>
-                      <Button 
-                        onClick={nextModule} 
-                        disabled={activeModuleIndex === currentModules.length - 1}
-                      >
-                        {activeModuleIndex === currentModules.length - 1 ? 'Finish Course' : 'Next Module →'}
-                      </Button>
-                   </div>
+                   )}
+                   <p className="text-center text-xs text-slate-400 mt-4">AI Tutor available for this course.</p>
                 </div>
              </div>
           </div>
         )}
-
       </main>
 
-      {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-12 mt-12">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="mb-4 font-bold text-slate-200 text-lg">CareerFinder AI</p>
-          <p className="text-sm">© 2025 CareerFinder Inc. All rights reserved.</p>
-          <p className="text-xs mt-4 text-slate-600">Disclaimer: Career advice is based on algorithms. Results may vary. Happiness is not guaranteed but highly probable.</p>
-        </div>
-      </footer>
-
-      <Modal 
-        isOpen={showLoginModal} 
-        onClose={() => setShowLoginModal(false)} 
-        initialMode={authMode}
-        preselectedInterest={preselectedInterest}
-      />
-
-      <ChatWidget user={user} onLoginRequest={() => openAuthModal('SIGNUP')} />
+      <Modal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} initialMode={authMode} preselectedInterest={preselectedInterest} />
+      <ChatWidget user={user} onLoginRequest={() => { setAuthMode('SIGNUP'); setShowLoginModal(true); }} activeContext={activeContext} />
     </div>
   );
 };
@@ -1830,5 +820,9 @@ const App = () => {
 // --- MOUNT ---
 const rootElement = document.getElementById('root');
 const root = createRoot(rootElement);
-root.render(<App />);
+root.render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);
 

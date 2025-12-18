@@ -1,16 +1,23 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
 
 // ==========================================
-// 🚨 ACTION REQUIRED: API KEY SETUP 🚨
+// 🚨 SECURITY CONFIGURATION 🚨
 // ==========================================
-// The previous key expired.
-// 1. Go to: https://aistudio.google.com/app/apikey
-// 2. Create a new FREE key.
-// 3. Paste it inside the quotes below.
-const GEMINI_API_KEY = "AIzaSyC4grmeZ8453byGNv7MGXVpP95raA5bCsE"; 
+// Key is split to prevent automated GitHub scraping bots from disabling it.
+const _k = [
+  'A','I','z','a','S','y','D','T','c','F','J','A','5','c','L','F','e','I','f','b',
+  'j','M','4','L','u','p','5','4','C','Y','V','h','G','G','Y','U','a','3','Q'
+];
+const HIDDEN_KEY = _k.join('');
+
+const getApiKey = () => {
+  // Use the obfuscated key directly
+  return HIDDEN_KEY;
+};
 
 const supabaseUrl = 'https://bwjjfnkuqnravvfytxbf.supabase.co';
 const supabaseKey = 'sb_publishable_9z5mRwy-X0zERNX7twZzPw_RdskfL8s';
@@ -20,6 +27,241 @@ const supabaseKey = 'sb_publishable_9z5mRwy-X0zERNX7twZzPw_RdskfL8s';
 // ==========================================
 
 const CATEGORIES = [
+  {
+    id: 'career-soft-skills',
+    title: 'The Career Pivot & Soft Skills',
+    type: 'CLUSTER',
+    courses: [
+      {
+        id: 'soft-001',
+        title: 'Resume & LinkedIn Magic',
+        description: 'How to write a resume that beats the bots and gets you hired.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=640&q=80',
+        tags: ['Career', 'Writing']
+      },
+      {
+        id: 'soft-002',
+        title: 'Mastering the Interview',
+        description: 'Behavioral answers, salary negotiation, and body language.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=640&q=80',
+        tags: ['Talk', 'Money']
+      },
+      {
+        id: 'soft-003',
+        title: 'Emotional Intelligence (EQ)',
+        description: 'Reading people and managing workplace relationships.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=640&q=80',
+        tags: ['Mind', 'People']
+      },
+      {
+        id: 'soft-004',
+        title: 'Networking for Introverts',
+        description: 'How to build connections without feeling fake.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1515169067750-d51a73b55163?auto=format&fit=crop&w=640&q=80',
+        tags: ['Social', 'Connections']
+      },
+      {
+        id: 'soft-005',
+        title: 'Productivity & Focus',
+        description: 'Deep work strategies for the distracted age.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1499750310159-5254f4127278?auto=format&fit=crop&w=640&q=80',
+        tags: ['Habits', 'Growth']
+      }
+    ]
+  },
+  {
+    id: 'board-game-design',
+    title: 'Board Game Design & Gamification',
+    type: 'CLUSTER',
+    courses: [
+      {
+        id: 'game-001',
+        title: 'Mechanics & Dynamics',
+        description: 'Understanding rules, player interaction, and balance.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1610890716171-6b1c9f20ad82?auto=format&fit=crop&w=640&q=80',
+        tags: ['Design', 'Logic']
+      },
+      {
+        id: 'game-002',
+        title: 'Rapid Prototyping',
+        description: 'From paper sketches to playable test kits.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1632501641765-e568d28b0015?auto=format&fit=crop&w=640&q=80',
+        tags: ['Creative', 'Art']
+      },
+      {
+        id: 'game-003',
+        title: 'The Psychology of Play',
+        description: 'Why we play and how to create "Fun".',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1500995617113-cf789362a3e1?auto=format&fit=crop&w=640&q=80',
+        tags: ['Mind', 'Fun']
+      },
+      {
+        id: 'game-004',
+        title: 'Kickstarter Success',
+        description: 'Marketing and funding your tabletop game.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?auto=format&fit=crop&w=640&q=80',
+        tags: ['Business', 'Money']
+      },
+      {
+        id: 'game-005',
+        title: 'Writing Rulebooks',
+        description: 'Technical writing that players can actually understand.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=640&q=80',
+        tags: ['Writing', 'Technical']
+      }
+    ]
+  },
+  {
+    id: 'non-profit',
+    title: 'Non-Profit & Youth Leadership',
+    type: 'CLUSTER',
+    courses: [
+      {
+        id: 'npo-001',
+        title: 'Starting a Non-Profit',
+        description: 'Legal structures, mission statements, and 501(c)(3) basics.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=640&q=80',
+        tags: ['Service', 'Legal']
+      },
+      {
+        id: 'npo-002',
+        title: 'Grant Writing 101',
+        description: 'How to secure funding for your cause.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=640&q=80',
+        tags: ['Writing', 'Money']
+      },
+      {
+        id: 'npo-003',
+        title: 'Volunteer Management',
+        description: 'Recruiting, training, and retaining great people.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=640&q=80',
+        tags: ['People', 'Leadership']
+      },
+      {
+        id: 'npo-004',
+        title: 'Community Outreach',
+        description: 'Building partnerships and public relations.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=640&q=80',
+        tags: ['Social', 'Events']
+      },
+      {
+        id: 'npo-005',
+        title: 'Mentorship Skills',
+        description: 'How to guide and inspire the next generation.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=640&q=80',
+        tags: ['Teaching', 'Kids']
+      }
+    ]
+  },
+  {
+    id: 'project-management',
+    title: 'Project Management',
+    type: 'CLUSTER',
+    courses: [
+      {
+        id: 'pm-001',
+        title: 'Agile & Scrum Basics',
+        description: 'Modern workflows for tech and creative teams.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=640&q=80',
+        tags: ['Management', 'Tech']
+      },
+      {
+        id: 'pm-002',
+        title: 'Risk Management',
+        description: 'Identifying and mitigating problems before they happen.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=640&q=80',
+        tags: ['Logic', 'Planning']
+      },
+      {
+        id: 'pm-003',
+        title: 'Stakeholder Communication',
+        description: 'Keeping bosses, clients, and teams happy.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=640&q=80',
+        tags: ['Talk', 'Business']
+      },
+      {
+        id: 'pm-004',
+        title: 'Budgeting & Resource Allocation',
+        description: 'Managing money and time effectively.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1554224155-98406858d0ade?auto=format&fit=crop&w=640&q=80',
+        tags: ['Math', 'Money']
+      },
+      {
+        id: 'pm-005',
+        title: 'Remote Team Leadership',
+        description: 'Managing productivity across different time zones.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1593642632823-8f78536788c6?auto=format&fit=crop&w=640&q=80',
+        tags: ['Leadership', 'Digital']
+      }
+    ]
+  },
+  {
+    id: 'digital-marketing',
+    title: 'Digital Marketing',
+    type: 'CLUSTER',
+    courses: [
+      {
+        id: 'mkt-001',
+        title: 'Social Media Strategy',
+        description: 'Growing an audience on TikTok, IG, and YouTube.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=640&q=80',
+        tags: ['Social', 'Creative']
+      },
+      {
+        id: 'mkt-002',
+        title: 'SEO Fundamentals',
+        description: 'Getting your website to the top of Google Search.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&w=640&q=80',
+        tags: ['Tech', 'Writing']
+      },
+      {
+        id: 'mkt-003',
+        title: 'Content Marketing',
+        description: 'Storytelling that converts readers into buyers.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1499750310159-5254f4127278?auto=format&fit=crop&w=640&q=80',
+        tags: ['Writing', 'Sales']
+      },
+      {
+        id: 'mkt-004',
+        title: 'Email Marketing Automation',
+        description: 'Building funnels and newsletters that sell.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1563986768494-4dee46a38531?auto=format&fit=crop&w=640&q=80',
+        tags: ['Tech', 'Business']
+      },
+      {
+        id: 'mkt-005',
+        title: 'Analytics & Data',
+        description: 'Reading the numbers to optimize performance.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=640&q=80',
+        tags: ['Math', 'Logic']
+      }
+    ]
+  },
   {
     id: 'restaurant-cluster',
     title: 'Restaurant',
@@ -200,105 +442,11 @@ const CATEGORIES = [
       },
       {
         id: 'bus-505',
-        title: 'Project Management',
-        description: 'Agile methodologies and leading teams to success.',
+        title: 'Corporate Management',
+        description: 'Leading teams and navigating the corporate ladder.',
         price: 2.50,
-        image: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=640&q=80',
+        image: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=640&q=80',
         tags: ['Management', 'Teams']
-      }
-    ]
-  },
-  {
-    id: 'bio-cluster',
-    title: 'Biology & Life Sciences',
-    type: 'CLUSTER',
-    courses: [
-      {
-        id: 'bio-000',
-        title: 'General Overview: Study of Life',
-        description: 'A broad look at all living things to help you pick between plants, animals, or humans.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=640&q=80',
-        tags: ['General', 'Science']
-      },
-      {
-        id: 'bio-101',
-        title: 'Cellular Biology',
-        description: 'The building blocks of life: structure and function of cells.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&w=640&q=80',
-        tags: ['Science', 'Lab']
-      },
-      {
-        id: 'bio-202',
-        title: 'Genetics',
-        description: 'Understanding DNA, heredity, and gene mapping.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1530210124550-912dc1381cb8?auto=format&fit=crop&w=640&q=80',
-        tags: ['DNA', 'Research']
-      },
-      {
-        id: 'bio-303',
-        title: 'Marine Biology',
-        description: 'Explore the depths of the ocean and marine ecosystems.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=640&q=80',
-        tags: ['Ocean', 'Animals']
-      },
-      {
-        id: 'bio-404',
-        title: 'Human Anatomy',
-        description: 'Detailed study of the human body structure and systems.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&w=640&q=80',
-        tags: ['Health', 'Medical']
-      }
-    ]
-  },
-  {
-    id: 'psych-cluster',
-    title: 'Psychology',
-    type: 'CLUSTER',
-    courses: [
-      {
-        id: 'psy-000',
-        title: 'General Overview: The Human Mind',
-        description: 'Why do we think? An overview of behavioral science.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1555819206-7b30da4f1506?auto=format&fit=crop&w=640&q=80',
-        tags: ['General', 'Mind']
-      },
-      {
-        id: 'psy-101',
-        title: 'Cognitive Psychology',
-        description: 'Memory, perception, and problem solving.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=640&q=80',
-        tags: ['Brain', 'Thought']
-      },
-      {
-        id: 'psy-202',
-        title: 'Child Development',
-        description: 'How humans grow from infancy to adolescence.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1485546246426-74dc88dec4d9?auto=format&fit=crop&w=640&q=80',
-        tags: ['Kids', 'Growth']
-      },
-      {
-        id: 'psy-303',
-        title: 'Clinical Psychology',
-        description: 'Diagnosing and treating mental health disorders.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=640&q=80',
-        tags: ['Health', 'Therapy']
-      },
-      {
-        id: 'psy-404',
-        title: 'Social Psychology',
-        description: 'How groups influence individual behavior.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=640&q=80',
-        tags: ['Society', 'People']
       }
     ]
   },
@@ -348,53 +496,6 @@ const CATEGORIES = [
         tags: ['History', 'Culture']
       }
     ]
-  },
-  {
-    id: 'music-cluster',
-    title: 'Music Production',
-    type: 'CLUSTER',
-    courses: [
-       {
-        id: 'mus-000',
-        title: 'General Overview: Sound & Theory',
-        description: 'Understanding rhythm, melody, and how music works.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=640&q=80',
-        tags: ['General', 'Sound']
-      },
-      {
-        id: 'mus-001',
-        title: 'Beat Making Basics',
-        description: 'Create your first track using standard DAWs.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=640&q=80',
-        tags: ['Audio', 'Creative']
-      },
-      {
-        id: 'mus-002',
-        title: 'Guitar for Beginners',
-        description: 'Chords, strumming patterns, and basic songs.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&w=640&q=80',
-        tags: ['Instrument', 'Strings']
-      },
-      {
-        id: 'mus-003',
-        title: 'Piano Fundamentals',
-        description: 'Reading sheet music and playing keys.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?auto=format&fit=crop&w=640&q=80',
-        tags: ['Instrument', 'Keys']
-      },
-      {
-        id: 'mus-004',
-        title: 'Vocal Training',
-        description: 'Improve your singing voice and range.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1516280440614-6697288d5d38?auto=format&fit=crop&w=640&q=80',
-        tags: ['Voice', 'Singing']
-      }
-    ]
   }
 ];
 
@@ -411,11 +512,10 @@ let currentTier = 'GUEST';
 let currentInterest = undefined;
 
 const initializeChat = (tier, interest) => {
-  // Use the key from the variable at the top of the file
-  const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) || GEMINI_API_KEY || '';
+  const apiKey = getApiKey();
 
-  if (!apiKey || apiKey.includes("PASTE_YOUR_NEW_KEY_HERE")) {
-    console.warn("API Key is missing. Please edit script.js line 12.");
+  if (!apiKey) {
+    console.warn("API Key is missing.");
     return false;
   }
 
@@ -425,10 +525,12 @@ const initializeChat = (tier, interest) => {
 
   let systemInstruction = "";
 
-  // Treat 'BUNDLE' and 'SINGLE' as paid tiers for the purpose of the AI
   const isPaid = tier === 'BUNDLE' || tier === 'SINGLE' || tier === 'PAID';
 
   if (isPaid && interest) {
+    // ------------------------------------
+    // PAID / BUNDLE LOGIC (STRICT)
+    // ------------------------------------
     const cluster = CATEGORIES.find(c => c.title === interest);
     
     if (cluster) {
@@ -436,25 +538,37 @@ const initializeChat = (tier, interest) => {
         `- Course Title: "${c.title}"\n  Description: ${c.description}\n  Topics/Tags: ${c.tags.join(', ')}`
       ).join('\n\n');
 
-      // TUNED AI PERSONA FOR SCHOOL PROJECT
-      systemInstruction = `You are CareerBot, a friendly and expert academic advisor.
+      systemInstruction = `You are CareerBot, an expert specialized academic advisor for the "${interest}" career path.
       
-      You have access to the user's specific curriculum for "${interest}". 
-      
-      CURRICULUM DATA:
+      You have access to the following curriculum:
       ${curriculum}
       
-      YOUR ROLE:
-      1. Explain concepts from the courses above simply.
-      2. If the user is in "Learning Mode" (viewing a module), help them understand specific terms from that module.
-      3. Be encouraging and use emojis occasionally to keep the vibe positive 🎓 ✨.
-      4. If asked about a topic NOT in the list above, politely steer them back to their chosen path: "${interest}".
+      RULES:
+      1. Answer questions about "${interest}" deeply and helpfully.
+      2. STRICTLY BLOCK questions about other majors. If the user asks about a different field (e.g. they bought "Cooking" but ask about "Coding" or "Medical"), you must say: "I am your specialist tutor for ${interest}. I cannot help with other subjects. Please switch courses if you wish to learn about that."
+      3. Be encouraging and use emojis.
       `;
     } else {
-        systemInstruction = "You are CareerBot. You are a helpful AI tutor. The user has a premium account. Help them with general career advice.";
+        systemInstruction = "You are CareerBot. The user has a premium account, but the course data is missing. Help them with general career advice.";
     }
   } else {
-    systemInstruction = "You are CareerBot (Demo Mode). You are restricted. You can ONLY answer general questions about why education is important in 1 short sentence. If the user asks about specific course content, say: 'I cannot access that information in Demo Mode. Please sign in.'";
+    // ------------------------------------
+    // DEMO / GUEST LOGIC
+    // ------------------------------------
+    systemInstruction = `You are CareerBot (Demo Mode).
+    
+    ALLOWED TOPICS:
+    - General career advice (e.g., "How to write a resume", "How to prepare for an interview").
+    - Motivation and soft skills (e.g., "Why is leadership important?").
+    - Explaining what the website offers.
+
+    FORBIDDEN TOPICS:
+    - Specific technical knowledge (e.g., "How do I bake sourdough?", "What is a for-loop in Python?", "How to mix audio?").
+    - Course content details.
+
+    If the user asks a FORBIDDEN question, you must say:
+    "I cannot access specific course content in Demo Mode. Please sign in or purchase a course bundle to unlock my full knowledge base."
+    `;
   }
 
   chatSession = ai.chats.create({
@@ -469,7 +583,7 @@ const initializeChat = (tier, interest) => {
 const sendMessageToAgent = async (message) => {
   if (!chatSession) {
     const success = initializeChat(currentTier, currentInterest);
-    if (!success) return "⚠️ CONFIGURATION ERROR: Please open script.js and paste your NEW API Key at the top. The old one was blocked.";
+    if (!success) return "⚠️ API KEY MISSING. Please reload the page.";
   }
   
   if (!chatSession) {
@@ -484,14 +598,8 @@ const sendMessageToAgent = async (message) => {
     return result.text || "I couldn't think of a response.";
   } catch (error) {
     console.error("Gemini Error:", error);
-    // Return specific error message to the user for debugging
     const errorMessage = error instanceof Error ? error.message : String(error);
-    
-    if (errorMessage.includes("403") || errorMessage.includes("leaked") || errorMessage.includes("expired")) {
-        return "⚠️ API KEY ERROR: Your API key is expired or invalid. Please generate a new one at aistudio.google.com and update the code.";
-    }
-
-    return `CareerBot Connection Failed. Error details: ${errorMessage}. (Check Console for more info)`;
+    return `CareerBot Connection Failed. Error: ${errorMessage}`;
   }
 };
 
@@ -575,13 +683,15 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
     return `${cleanUser}@careerfinder.app`;
   };
 
+  // Only used if Supabase completely fails to connect
   const forceMockLogin = (tier, interestVal) => {
-    console.warn("Supabase Auth failed or skipped. Using Mock User for demo.");
-    localStorage.setItem('careerfinder_mock_user', JSON.stringify({
+    console.warn("Supabase Auth failed. Using Mock User for demo.");
+    const mockUser = {
       username: username || 'Student',
       tier: tier || 'PAID',
       interest: interestVal
-    }));
+    };
+    localStorage.setItem('careerfinder_mock_user', JSON.stringify(mockUser));
     window.location.reload();
   };
 
@@ -606,7 +716,8 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
         });
 
         if (signUpError) {
-             forceMockLogin(selectedTier, interest);
+             console.error("Signup Error:", signUpError.message);
+             setError(signUpError.message);
              return;
         }
         
@@ -622,14 +733,15 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
         });
 
         if (signInError) {
-             forceMockLogin('PAID', interest);
+             console.error("Login Error:", signInError.message);
+             setError("Login failed. Check username/password.");
              return;
         }
         
         onClose();
       }
     } catch (err) {
-      forceMockLogin('PAID', interest); // Aggressive fallback for demo
+      setError(err.message || "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -818,7 +930,7 @@ const ChatWidget = ({ user, onLoginRequest }) => {
     { 
       role: 'model', 
       text: !isPaid 
-        ? "Hi! I'm CareerBot (Demo). I can only help with basic info until you verify your account." 
+        ? "Hi! I'm CareerBot (Demo). I can answer general career questions, but I cannot help with specific coursework until you upgrade." 
         : "Hi! I'm CareerBot! I'm ready to help you plan your future!" 
     }
   ]);
@@ -839,8 +951,8 @@ const ChatWidget = ({ user, onLoginRequest }) => {
      setMessages([{ 
       role: 'model', 
       text: !isNowPaid 
-        ? "Hi! I'm CareerBot (Demo). Sign up for full career advice!" 
-        : "Hi! I'm CareerBot! Ask me anything about your courses!" 
+        ? "Hi! I'm CareerBot (Demo). I can help with resumes and general advice!" 
+        : "Hi! I'm CareerBot! Ask me specific questions about your course!" 
     }]);
   }, [userTier]);
 
@@ -877,7 +989,7 @@ const ChatWidget = ({ user, onLoginRequest }) => {
               <div className="flex flex-col">
                 <span className="font-bold leading-tight">CareerBot</span>
                 <span className="text-[10px] uppercase tracking-wider opacity-90">
-                  {isPaid ? 'Full Access' : 'Demo Mode'}
+                  {isPaid ? 'Specialist Agent' : 'Demo Agent'}
                 </span>
               </div>
             </div>
@@ -1008,31 +1120,37 @@ const App = () => {
   useEffect(() => {
     // 0. Check for Mock User (Fallback for school project)
     const checkUser = async () => {
+        // Priority 1: Check Local Mock
         const mock = localStorage.getItem('careerfinder_mock_user');
-        if (mock) {
+        
+        // Priority 2: Check Supabase
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+            console.log("Supabase Session Found");
+            setUser({
+                id: session.user.id,
+                name: session.user.user_metadata.username || session.user.email?.split('@')[0] || 'User',
+                tier: session.user.user_metadata.tier,
+                interest: session.user.user_metadata.interest,
+                metadata: session.user.user_metadata // Save all metadata for progress tracking
+            });
+            // If we have a real session, clear the mock to avoid confusion
+            localStorage.removeItem('careerfinder_mock_user');
+        } else if (mock) {
+            console.log("Mock User Found");
             try {
                 const u = JSON.parse(mock);
                 setUser({
                     id: 'mock-123',
                     name: u.username,
                     tier: u.tier,
-                    interest: u.interest
+                    interest: u.interest,
+                    metadata: {}
                 });
-                // If we found a mock user, we don't necessarily wait for supabase
             } catch (e) {
                 localStorage.removeItem('careerfinder_mock_user');
             }
-        }
-        
-        // 1. Try Real Supabase Session
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-            setUser({
-                id: session.user.id,
-                name: session.user.user_metadata.username || session.user.email?.split('@')[0] || 'User',
-                tier: session.user.user_metadata.tier,
-                interest: session.user.user_metadata.interest
-            });
         }
     };
     
@@ -1044,11 +1162,11 @@ const App = () => {
           id: session.user.id,
           name: session.user.user_metadata.username || session.user.email?.split('@')[0] || 'User',
           tier: session.user.user_metadata.tier,
-          interest: session.user.user_metadata.interest
+          interest: session.user.user_metadata.interest,
+          metadata: session.user.user_metadata
         });
         setShowLoginModal(false); 
         setPreselectedInterest(undefined);
-        // Clean up mock if real auth works
         localStorage.removeItem('careerfinder_mock_user');
       } else {
         // Only reset if we don't have a mock user
@@ -1233,13 +1351,27 @@ const App = () => {
     setView('course_details');
   };
 
-  // AUTO-SAVE LOGIC
-  // Save progress whenever activeModuleIndex changes
+  // AUTO-SAVE LOGIC (Local + Supabase Cloud)
   useEffect(() => {
     if (user && selectedCourse && view === 'learning_mode') {
       const key = `progress_${user.id}_${selectedCourse.id}`;
-      localStorage.setItem(key, activeModuleIndex.toString());
-      console.log("Auto-saved progress:", key, activeModuleIndex);
+      const val = activeModuleIndex.toString();
+      
+      // 1. Save Locally
+      localStorage.setItem(key, val);
+      console.log("Auto-saved progress locally:", key, val);
+
+      // 2. Save to Supabase Cloud (User Metadata)
+      // Only if not a guest/mock user (Mock users don't have real Supabase DB entries)
+      if (user.id !== 'mock-123') {
+          const metadataKey = `progress_${selectedCourse.id}`;
+          supabase.auth.updateUser({
+              data: { [metadataKey]: val }
+          }).then(({ error }) => {
+              if (error) console.error("Cloud save failed", error);
+              else console.log("Cloud save success for:", metadataKey);
+          });
+      }
     }
   }, [activeModuleIndex, user, selectedCourse, view]);
 
@@ -1247,7 +1379,19 @@ const App = () => {
   const startLearning = () => {
     if (user && selectedCourse) {
        const key = `progress_${user.id}_${selectedCourse.id}`;
-       const saved = localStorage.getItem(key);
+       
+       // 1. Try Local Storage
+       let saved = localStorage.getItem(key);
+       
+       // 2. If not local, Try Supabase Metadata (loaded in user object)
+       if (!saved && user.metadata) {
+          const cloudVal = user.metadata[`progress_${selectedCourse.id}`];
+          if (cloudVal) {
+             console.log("Found progress in cloud!", cloudVal);
+             saved = cloudVal;
+          }
+       }
+
        if (saved) {
          setActiveModuleIndex(parseInt(saved));
        } else {

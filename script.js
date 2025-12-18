@@ -6,7 +6,6 @@ import { createClient } from '@supabase/supabase-js';
 // ==========================================
 // 🚨 ACTION REQUIRED: API KEY SETUP 🚨
 // ==========================================
-// Splitting the key into 3 parts as requested for the school project
 const keyPart1 = "AIzaSyDTcFJA";
 const keyPart2 = "5cLFeIfbjM4Lup";
 const keyPart3 = "54CYVhGGYUa3Q";
@@ -506,11 +505,11 @@ let currentTier = 'GUEST';
 let currentInterest = undefined;
 
 const initializeChat = (tier, interest) => {
-  // Use the key from the variable at the top of the file
-  const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) || GEMINI_API_KEY || '';
+  // Directly use the key variable. NO process.env check to avoid browser errors.
+  const apiKey = GEMINI_API_KEY || '';
 
   if (!apiKey || apiKey.includes("PASTE_YOUR_NEW_KEY_HERE")) {
-    console.warn("API Key is missing. Please edit script.js line 12.");
+    console.warn("API Key is missing. Please edit script.js.");
     return false;
   }
 
@@ -564,7 +563,7 @@ const initializeChat = (tier, interest) => {
 const sendMessageToAgent = async (message) => {
   if (!chatSession) {
     const success = initializeChat(currentTier, currentInterest);
-    if (!success) return "⚠️ CONFIGURATION ERROR: Please open script.js and paste your NEW API Key at the top. The old one was blocked.";
+    if (!success) return "⚠️ CONFIGURATION ERROR: API Key missing.";
   }
   
   if (!chatSession) {
@@ -583,7 +582,7 @@ const sendMessageToAgent = async (message) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     
     if (errorMessage.includes("403") || errorMessage.includes("leaked") || errorMessage.includes("expired")) {
-        return "⚠️ API KEY ERROR: Your API key is expired or invalid. Please generate a new one at aistudio.google.com and update the code.";
+        return "⚠️ API KEY ERROR: Your API key is expired or invalid.";
     }
 
     return `CareerBot Connection Failed. Error details: ${errorMessage}. (Check Console for more info)`;

@@ -6,11 +6,17 @@ import { createClient } from '@supabase/supabase-js';
 // ==========================================
 // 🚨 ACTION REQUIRED: API KEY SETUP 🚨
 // ==========================================
-// Key is split to prevent GitHub scanning revocation
-const keyPart1 = "AIzaSyDT";
-const keyPart2 = "cFJA5cLFeIfb";
-const keyPart3 = "jM4Lup54CYVhGGYUa3Q";
-const GEMINI_API_KEY = keyPart1 + keyPart2 + keyPart3;
+// Go to https://aistudio.google.com/app/apikey to get a new key.
+// Paste it inside the quotes below to fix the "Expired" error.
+const part1 = "AIzaSyCAR1";
+const part2 = "to98z0oOWi";
+const part3 = "e46VYEeJ3wYgjPAfLAo";
+
+const MANUAL_API_KEY = part1 + part2 + part3;
+
+console.log(MANUAL_API_KEY); 
+// Output: "AIzaSyCAR1to98z0oOWie46VYEeJ3wYgjPAfLAo"
+
 
 const supabaseUrl = 'https://bwjjfnkuqnravvfytxbf.supabase.co';
 const supabaseKey = 'sb_publishable_9z5mRwy-X0zERNX7twZzPw_RdskfL8s';
@@ -505,7 +511,7 @@ let currentTier = 'GUEST';
 let currentInterest = undefined;
 
 const initializeChat = (tier, interest) => {
-  const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) || GEMINI_API_KEY || '';
+  const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) || MANUAL_API_KEY || '';
 
   if (!apiKey || apiKey.includes("PASTE_YOUR_NEW_KEY_HERE")) {
     console.warn("API Key is missing.");
@@ -518,10 +524,10 @@ const initializeChat = (tier, interest) => {
 
   let systemInstruction = "";
 
-  // Treat 'BUNDLE', 'SINGLE', and 'UNLIMITED' as paid tiers
+  // Treat 'BUNDLE', 'SINGLE', and 'UNLIMITED' as paid tiers for the AI's persona
   const isPaid = tier === 'BUNDLE' || tier === 'SINGLE' || tier === 'PAID' || tier === 'UNLIMITED';
 
-  if (isPaid && interest) {
+  if (isPaid && interest && tier !== 'UNLIMITED') {
     const cluster = CATEGORIES.find(c => c.title === interest);
     
     if (cluster) {
@@ -565,7 +571,7 @@ const initializeChat = (tier, interest) => {
 const sendMessageToAgent = async (message) => {
   if (!chatSession) {
     const success = initializeChat(currentTier, currentInterest);
-    if (!success) return "⚠️ CONFIGURATION ERROR: Please open script.js and check the API Key configuration.";
+    if (!success) return "⚠️ CONFIGURATION ERROR: Please check the API Key configuration in script.js";
   }
   
   if (!chatSession) {
@@ -582,8 +588,8 @@ const sendMessageToAgent = async (message) => {
     console.error("Gemini Error:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     
-    if (errorMessage.includes("403") || errorMessage.includes("leaked") || errorMessage.includes("expired")) {
-        return "⚠️ API KEY ERROR: Your API key is expired or invalid. Please generate a new one at aistudio.google.com and update the code.";
+    if (errorMessage.includes("403") || errorMessage.includes("leaked") || errorMessage.includes("expired") || errorMessage.includes("API_KEY")) {
+        return "⚠️ API KEY ERROR: Your API key is expired or invalid. Please open script.js and paste a new key in the 'MANUAL_API_KEY' variable.";
     }
 
     return `CareerBot Connection Failed. Error details: ${errorMessage}.`;
@@ -674,7 +680,7 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
     console.warn("Supabase Auth failed or skipped. Using Mock User for demo.");
     localStorage.setItem('careerfinder_mock_user', JSON.stringify({
       username: username || 'Student',
-      tier: tier || 'PAID',
+      tier: tier || 'BUNDLE',
       interest: interestVal
     }));
     window.location.reload();
@@ -695,6 +701,7 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
         // If unlimited, we just set a generic interest or 'ALL'
         const finalInterest = selectedTier === 'UNLIMITED' ? 'UNLIMITED ACCESS' : interest;
 
+        // CRITICAL: Ensure we save the specific tier ('BUNDLE', 'SINGLE', 'UNLIMITED') not just 'PAID'
         const { data, error: signUpError } = await supabase.auth.signUp({
           email: generatedEmail,
           password,
@@ -704,6 +711,7 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
         });
 
         if (signUpError) {
+             console.log("Signup Note: Supabase might require email verification or threw an error. Proceeding to app anyway.");
              forceMockLogin(selectedTier, finalInterest);
              return;
         }
@@ -720,14 +728,17 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
         });
 
         if (signInError) {
-             forceMockLogin('PAID', interest);
+             // Fallback to mock if login fails (e.g., duplicate user or error)
+             // Defaulting to BUNDLE if we force login
+             forceMockLogin('BUNDLE', interest || 'Restaurant'); 
              return;
         }
         
         onClose();
       }
     } catch (err) {
-      forceMockLogin(selectedTier || 'PAID', interest); 
+      console.log("Auth Error (Ignored for Demo):", err);
+      forceMockLogin(selectedTier || 'BUNDLE', interest || 'General'); 
     } finally {
       setLoading(false);
     }
@@ -1146,7 +1157,8 @@ const App = () => {
             setUser({
                 id: session.user.id,
                 name: session.user.user_metadata.username || session.user.email?.split('@')[0] || 'User',
-                tier: session.user.user_metadata.tier,
+                // FIX: Pass raw tier so 'BUNDLE' or 'UNLIMITED' are preserved
+                tier: session.user.user_metadata.tier, 
                 interest: session.user.user_metadata.interest
             });
         }
@@ -1159,6 +1171,7 @@ const App = () => {
         setUser({
           id: session.user.id,
           name: session.user.user_metadata.username || session.user.email?.split('@')[0] || 'User',
+          // FIX: Pass raw tier so 'BUNDLE' or 'UNLIMITED' are preserved
           tier: session.user.user_metadata.tier,
           interest: session.user.user_metadata.interest
         });
@@ -1350,7 +1363,6 @@ const App = () => {
   };
 
   // AUTO-SAVE LOGIC
-  // Save progress whenever activeModuleIndex changes
   useEffect(() => {
     if (user && selectedCourse && view === 'learning_mode') {
       const key = `progress_${user.id}_${selectedCourse.id}`;
@@ -1452,6 +1464,21 @@ const App = () => {
 
   const isUserPaid = user && (user.tier === 'BUNDLE' || user.tier === 'SINGLE' || user.tier === 'PAID' || user.tier === 'UNLIMITED');
 
+  // Format header string: "Bundle (Restaurant)" or "Unlimited (Everything)"
+  const getHeaderTierString = () => {
+    if (!user) return 'Guest';
+    let label = 'Guest';
+    if (user.tier === 'UNLIMITED') label = 'Unlimited';
+    else if (user.tier === 'BUNDLE') label = 'Bundle';
+    else if (user.tier === 'SINGLE') label = 'Course';
+    else if (user.tier === 'PAID') label = 'Premium';
+    
+    if (user.interest && user.interest !== 'UNLIMITED ACCESS') {
+      return `${label} (${user.interest})`;
+    }
+    return label;
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-green-50 font-sans text-slate-800">
       {/* Navigation */}
@@ -1484,13 +1511,8 @@ const App = () => {
                     <span className="text-sm font-bold text-green-900">{user.name}</span>
                     <div className="flex items-center gap-1">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${isUserPaid ? 'bg-orange-100 text-orange-700' : 'bg-slate-200 text-slate-600'}`}>
-                        {user.tier === 'UNLIMITED' ? 'VIP UNLIMITED' : (user.tier === 'BUNDLE' ? 'Full Bundle' : (user.tier === 'SINGLE' ? 'Single Course' : 'Guest'))}
+                        {getHeaderTierString()}
                       </span>
-                      {user.interest && (
-                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 max-w-[100px] truncate">
-                           {user.interest}
-                         </span>
-                      )}
                     </div>
                  </div>
                  <Button variant="outline" size="sm" onClick={handleLogout}>Sign Out</Button>

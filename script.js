@@ -8,15 +8,7 @@ import { createClient } from '@supabase/supabase-js';
 // ==========================================
 // Go to https://aistudio.google.com/app/apikey to get a new key.
 // Paste it inside the quotes below to fix the "Expired" error.
-const part1 = "AIzaSyCAR1";
-const part2 = "to98z0oOWi";
-const part3 = "e46VYEeJ3wYgjPAfLAo";
-
-const MANUAL_API_KEY = part1 + part2 + part3;
-
-console.log(MANUAL_API_KEY); 
-// Output: "AIzaSyCAR1to98z0oOWie46VYEeJ3wYgjPAfLAo"
-
+const MANUAL_API_KEY = "AIzaSyCAR1to98z0oOWie46VYEeJ3wYgjPAfLAo"; 
 
 const supabaseUrl = 'https://bwjjfnkuqnravvfytxbf.supabase.co';
 const supabaseKey = 'sb_publishable_9z5mRwy-X0zERNX7twZzPw_RdskfL8s';

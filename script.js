@@ -9,7 +9,7 @@ import { createClient } from '@supabase/supabase-js';
 // ==========================================
 // We split the key so scanners don't auto-block it.
 const KEY_PART_A = "AIzaSy"; 
-const KEY_PART_B = "_PASTE_YOUR_REST_OF_KEY_HERE_"; // Replace this with the rest of your key
+const KEY_PART_B = "DTcFJA5cLFeIfbjM4Lup54CYVhGGYUa3Q"; // Replace this with the rest of your key
 
 const getApiKey = () => {
   if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {

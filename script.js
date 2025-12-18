@@ -10,7 +10,7 @@ import { createClient } from '@supabase/supabase-js';
 const K_PART_1 = "AIzaSyDTcFJA";
 const K_PART_2 = "5cLFeIfbjM4";
 const K_PART_3 = "Lup54CYVhGGYUa3Q";
-const GEMINI_API_KEY = K_PART_1 + K_PART_2 + K_PART_3;
+const FALLBACK_KEY = K_PART_1 + K_PART_2 + K_PART_3;
 
 const supabaseUrl = 'https://bwjjfnkuqnravvfytxbf.supabase.co';
 const supabaseKey = 'sb_publishable_9z5mRwy-X0zERNX7twZzPw_RdskfL8s';
@@ -505,8 +505,10 @@ let currentTier = 'GUEST';
 let currentInterest = undefined;
 
 const initializeChat = (tier, interest) => {
-  // Use the key from the variable at the top of the file
-  const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) || GEMINI_API_KEY || '';
+  // 1. Try process.env.API (User defined secret)
+  // 2. Try process.env.API_KEY (Standard secret)
+  // 3. Fallback to obfuscated key
+  let apiKey = (typeof process !== 'undefined' && process.env && (process.env.API || process.env.API_KEY)) || FALLBACK_KEY || '';
 
   if (!apiKey) {
     console.warn("API Key is missing.");
@@ -777,19 +779,23 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
               </div>
               
               <div className="space-y-4">
-                 {/* NEW ULTIMATE BUNDLE BUTTON */}
+                 {/* NEW ULTIMATE BUNDLE BUTTON - WHITE WITH GOLD BORDER */}
                 <button 
                   onClick={() => handlePlanSelect('ALL_ACCESS')}
-                  className="w-full flex items-center justify-between p-5 border-4 border-yellow-400 bg-yellow-50 rounded-xl hover:bg-yellow-100 transition shadow-lg group relative overflow-hidden"
+                  className="w-full relative group"
                 >
-                  <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-black px-2 py-0.5 uppercase tracking-wide">
-                      Best Value
+                  <div className="absolute -top-3 -right-2 z-20">
+                     <div className="bg-yellow-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm border-2 border-white">
+                       Best Value
+                     </div>
                   </div>
-                  <div className="text-left relative z-10">
-                    <div className="font-bold text-yellow-900 text-lg group-hover:text-yellow-700">Get It All (Perfect 10)</div>
-                    <div className="text-xs text-yellow-800 font-medium">Access EVERY Course + AI</div>
+                  <div className="flex items-center justify-between p-5 bg-white border-4 border-yellow-400 rounded-xl shadow-lg hover:shadow-2xl hover:bg-yellow-50 transition-all">
+                    <div className="text-left">
+                      <div className="font-bold text-yellow-900 text-lg">Get It All (Perfect 10)</div>
+                      <div className="text-xs text-yellow-700 font-medium">Access EVERY Course + AI</div>
+                    </div>
+                    <div className="font-bold text-yellow-900 text-xl">$85.00</div>
                   </div>
-                  <div className="font-bold text-yellow-800 bg-white px-3 py-1 rounded-lg shadow-sm relative z-10">$25.00</div>
                 </button>
 
                 <button 
@@ -800,7 +806,7 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
                     <div className="font-bold text-green-900 text-lg group-hover:text-green-700">Cluster Bundle</div>
                     <div className="text-xs text-green-700 font-medium">5 Courses in 1 Topic</div>
                   </div>
-                  <div className="font-bold text-green-700 bg-white px-3 py-1 rounded-lg shadow-sm">$85.00</div>
+                  <div className="font-bold text-green-700 bg-white px-3 py-1 rounded-lg shadow-sm">$10.00</div>
                 </button>
 
                 <button 
@@ -831,7 +837,7 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
                       'bg-slate-100 text-slate-600'
                     }`}>
                     Selected: {
-                        selectedTier === 'ALL_ACCESS' ? 'Perfect 10 Bundle ($25)' :
+                        selectedTier === 'ALL_ACCESS' ? 'Perfect 10 Bundle ($85)' :
                         selectedTier === 'BUNDLE' ? 'Cluster Bundle ($10)' : 
                         'Demo Mode (Free)'
                     }

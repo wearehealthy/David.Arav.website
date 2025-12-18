@@ -4,9 +4,6 @@ import { createRoot } from 'react-dom/client';
 import { GoogleGenAI } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
 
-// ==========================================
-// 🚨 SECURITY CONFIGURATION 🚨
-// ==========================================
 const _k = [
   'A','I','z','a','S','y','D','T','c','F','J','A','5','c','L','F','e','I','f','b',
   'j','M','4','L','u','p','5','4','C','Y','V','h','G','G','Y','U','a','3','Q'
@@ -20,7 +17,7 @@ const supabaseKey = 'sb_publishable_9z5mRwy-X0zERNX7twZzPw_RdskfL8s';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
-// 1. DATA & CONSTANTS
+// DATA & CONSTANTS
 // ==========================================
 
 const UserTier = {
@@ -75,6 +72,194 @@ const CATEGORIES = [
         price: 2.50,
         image: 'https://images.unsplash.com/photo-1499750310159-5254f4127278?auto=format&fit=crop&w=640&q=80',
         tags: ['Habits', 'Growth']
+      }
+    ]
+  },
+  {
+    id: 'law-cluster',
+    title: 'Law & Legal Studies',
+    type: 'CLUSTER',
+    courses: [
+      {
+        id: 'law-001',
+        title: 'Introduction to Torts',
+        description: 'Understanding civil wrongs and personal injury law basics.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=640&q=80',
+        tags: ['Legal', 'Justice']
+      },
+      {
+        id: 'law-002',
+        title: 'Criminal Law 101',
+        description: 'From misdemeanors to felonies: how the penal system works.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&w=640&q=80',
+        tags: ['Crime', 'Justice']
+      },
+      {
+        id: 'law-003',
+        title: 'Corporate Law Basics',
+        description: 'Contracts, mergers, and protecting intellectual property.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=640&q=80',
+        tags: ['Business', 'Money']
+      },
+      {
+        id: 'law-004',
+        title: 'Constitutional Rights',
+        description: 'Know your rights: Free speech, privacy, and due process.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=640&q=80',
+        tags: ['History', 'Gov']
+      },
+      {
+        id: 'law-005',
+        title: 'LSAT Prep Crash Course',
+        description: 'Logic games and reading comprehension strategies.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=640&q=80',
+        tags: ['Study', 'Logic']
+      }
+    ]
+  },
+  {
+    id: 'eng-cluster',
+    title: 'Engineering & Robotics',
+    type: 'CLUSTER',
+    courses: [
+      {
+        id: 'eng-001',
+        title: 'Mechanical Design',
+        description: 'Gears, levers, and CAD: Building things that move.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1537462713505-a111002572f4?auto=format&fit=crop&w=640&q=80',
+        tags: ['Math', 'Build']
+      },
+      {
+        id: 'eng-002',
+        title: 'Circuit Theory',
+        description: 'Voltage, current, and resistance explained simply.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?auto=format&fit=crop&w=640&q=80',
+        tags: ['Tech', 'Science']
+      },
+      {
+        id: 'eng-003',
+        title: 'Civil Engineering',
+        description: 'Bridges, roads, and skyscrapers: How they stand up.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=640&q=80',
+        tags: ['Build', 'City']
+      },
+      {
+        id: 'eng-004',
+        title: 'Arduino Robotics',
+        description: 'Programming microcontrollers to control motors and sensors.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1555255707-c07966088b7b?auto=format&fit=crop&w=640&q=80',
+        tags: ['Code', 'Robots']
+      },
+      {
+        id: 'eng-005',
+        title: 'Aerospace Fundamentals',
+        description: 'The physics of flight and rocket propulsion.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1517976487492-5750f3195933?auto=format&fit=crop&w=640&q=80',
+        tags: ['Space', 'Physics']
+      }
+    ]
+  },
+  {
+    id: 'health-cluster',
+    title: 'Healthcare & Medicine',
+    type: 'CLUSTER',
+    courses: [
+      {
+        id: 'med-001',
+        title: 'Anatomy 101',
+        description: 'Muscles, bones, and organs: The map of the body.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=640&q=80',
+        tags: ['Science', 'Body']
+      },
+      {
+        id: 'med-002',
+        title: 'Medical Terminology',
+        description: 'Learning the language of doctors and nurses.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1584036561566-b93cae3658cd?auto=format&fit=crop&w=640&q=80',
+        tags: ['Language', 'Work']
+      },
+      {
+        id: 'med-003',
+        title: 'First Aid & CPR',
+        description: 'Lifesaving skills everyone should know.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=640&q=80',
+        tags: ['Safety', 'Help']
+      },
+      {
+        id: 'med-004',
+        title: 'Mental Health Basics',
+        description: 'Understanding anxiety, depression, and therapy.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1527137342181-191fe16c5905?auto=format&fit=crop&w=640&q=80',
+        tags: ['Mind', 'Care']
+      },
+      {
+        id: 'med-005',
+        title: 'Nutrition Science',
+        description: 'Macros, micros, and how food fuels the body.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=640&q=80',
+        tags: ['Food', 'Health']
+      }
+    ]
+  },
+  {
+    id: 'trades-cluster',
+    title: 'Skilled Trades',
+    type: 'CLUSTER',
+    courses: [
+      {
+        id: 'trd-001',
+        title: 'Residential Electrical',
+        description: 'Wiring outlets, switches, and breaker panels safely.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=640&q=80',
+        tags: ['Hands-on', 'Power']
+      },
+      {
+        id: 'trd-002',
+        title: 'Modern Plumbing',
+        description: 'Pipes, fittings, and fixing common household leaks.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&w=640&q=80',
+        tags: ['Water', 'Fix']
+      },
+      {
+        id: 'trd-003',
+        title: 'Carpentry Basics',
+        description: 'Framing, measuring, and working with wood.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=640&q=80',
+        tags: ['Wood', 'Build']
+      },
+      {
+        id: 'trd-004',
+        title: 'HVAC Fundamentals',
+        description: 'Heating, ventilation, and air conditioning systems.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1504384308090-c54be3855833?auto=format&fit=crop&w=640&q=80',
+        tags: ['Air', 'Tech']
+      },
+      {
+        id: 'trd-005',
+        title: 'Welding Introduction',
+        description: 'MIG, TIG, and Stick welding safety and technique.',
+        price: 2.50,
+        image: 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=640&q=80',
+        tags: ['Metal', 'Fire']
       }
     ]
   },
@@ -504,10 +689,9 @@ const CATEGORIES = [
 ];
 
 // ==========================================
-// 2. SERVICES
+// SERVICES & AI INTEGRATION
 // ==========================================
 
-// --- GEMINI SERVICE ---
 let chatSession = null;
 let currentTier = UserTier.GUEST;
 let currentInterest = undefined;
@@ -572,7 +756,7 @@ const sendMessageToAgent = async (message) => {
 };
 
 // ==========================================
-// 3. COMPONENTS
+// UI COMPONENT LIBRARY
 // ==========================================
 
 const Button = ({ children, variant = 'primary', size = 'md', className = '', ...props }) => {
@@ -583,6 +767,7 @@ const Button = ({ children, variant = 'primary', size = 'md', className = '', ..
     secondary: "bg-orange-400 text-white hover:bg-orange-500 focus:ring-orange-300 shadow-md",
     outline: "border-2 border-green-200 bg-white text-green-700 hover:bg-green-50 focus:ring-green-400",
     ghost: "text-green-700 hover:bg-green-100",
+    danger: "bg-red-500 text-white hover:bg-red-600 focus:ring-red-400"
   };
 
   const sizes = { sm: "px-3 py-1.5 text-xs", md: "px-6 py-2.5 text-sm", lg: "px-8 py-4 text-base" };
@@ -594,11 +779,16 @@ const Button = ({ children, variant = 'primary', size = 'md', className = '', ..
   );
 };
 
+const Card = ({ children, className = "" }) => (
+    <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow duration-300 ${className}`}>
+        {children}
+    </div>
+);
+
 const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
   const [view, setView] = useState('FORM');
   const [mode, setMode] = useState(initialMode);
   const [selectedTier, setSelectedTier] = useState(null);
-  
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [interest, setInterest] = useState('');
@@ -632,20 +822,16 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
 
     try {
       const generatedEmail = generateEmail(username);
-
       if (mode === 'SIGNUP') {
         if (!username.trim() || !password.trim()) throw new Error('Please fill in all fields.');
         if (!interest) throw new Error('Please select an Interest.');
-
         const { error: signUpError } = await supabase.auth.signUp({
           email: generatedEmail,
           password,
           options: { data: { username, tier: selectedTier, interest } }
         });
-
         if (signUpError) throw new Error(signUpError.message);
         onClose();
-
       } else {
         if (!username.trim() || !password.trim()) throw new Error('Please enter username and password.');
         const { error: signInError } = await supabase.auth.signInWithPassword({ email: generatedEmail, password });
@@ -851,6 +1037,24 @@ const App = () => {
             <h1 className="text-5xl font-extrabold text-green-900 mb-8 text-center">Learn what you <span className="text-green-500">Love</span>.</h1>
             <Button size="lg" onClick={goToClusters}>Browse Course Groups</Button>
             <div className="mt-16 bg-slate-800 p-8 rounded-3xl text-center"><div className="text-5xl font-black text-green-400 mb-2">{userCount.toLocaleString()}</div><div className="text-white text-sm">Smart Winners Joined Already</div></div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 w-full max-w-5xl">
+               <Card className="p-6 bg-gradient-to-br from-green-500 to-emerald-600 text-white border-0">
+                 <div className="text-4xl mb-4">👑</div>
+                 <h3 className="text-xl font-bold mb-2">GUARANTEED SUCCESS</h3>
+                 <p className="text-green-100 text-sm">Our algorithms eliminate risk. Know your destiny with mathematical perfection.</p>
+               </Card>
+               <Card className="p-6 bg-gradient-to-br from-orange-400 to-amber-500 text-white border-0">
+                 <div className="text-4xl mb-4">🏆</div>
+                 <h3 className="text-xl font-bold mb-2">ELITE STATUS</h3>
+                 <p className="text-orange-100 text-sm">Join the winners circle. Secure unlimited potential and respect.</p>
+               </Card>
+               <Card className="p-6 bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-0">
+                 <div className="text-4xl mb-4">⚡</div>
+                 <h3 className="text-xl font-bold mb-2">INSTANT MASTERY</h3>
+                 <p className="text-blue-100 text-sm">Unlock genius level insight in seconds. It's almost magic.</p>
+               </Card>
+            </div>
           </div>
         )}
 
@@ -859,10 +1063,12 @@ const App = () => {
              <h2 className="text-3xl font-bold text-green-900 mb-8 text-center">Course Groups</h2>
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {CATEGORIES.map((category) => (
-                   <div key={category.id} onClick={() => openCluster(category)} className="cursor-pointer group rounded-2xl shadow-md bg-white overflow-hidden">
-                     <div className="h-44 bg-slate-200"><img src={category.courses[0]?.image} className="w-full h-full object-cover" /></div>
-                     <div className="p-6"><h3 className="text-xl font-bold text-slate-800 mb-2">{category.title}</h3><p className="text-slate-500 text-sm">{category.courses.length} Courses</p></div>
-                   </div>
+                   <Card key={category.id} className="cursor-pointer group">
+                     <div onClick={() => openCluster(category)}>
+                        <div className="h-44 bg-slate-200"><img src={category.courses[0]?.image} className="w-full h-full object-cover" /></div>
+                        <div className="p-6"><h3 className="text-xl font-bold text-slate-800 mb-2">{category.title}</h3><p className="text-slate-500 text-sm">{category.courses.length} Courses</p></div>
+                     </div>
+                   </Card>
                 ))}
              </div>
            </div>
@@ -885,10 +1091,10 @@ const App = () => {
              
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {selectedCategory.courses.map((course) => (
-                  <div key={course.id} className="group bg-white rounded-2xl shadow-sm hover:shadow-xl overflow-hidden">
+                  <Card key={course.id} className="group">
                     <div className="h-48 bg-slate-200"><img src={course.image} className="w-full h-full object-cover" /></div>
                     <div className="p-6"><h3 className="text-lg font-bold mb-2">{course.title}</h3><Button onClick={() => openCourse(course)} variant="outline" className="w-full">View Details</Button></div>
-                  </div>
+                  </Card>
                 ))}
              </div>
           </div>

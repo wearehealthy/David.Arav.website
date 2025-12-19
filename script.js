@@ -1900,7 +1900,7 @@ const App = () => {
                              CareerBot is reading along with you. If you don't understand specific terms in this module, just ask!
                            </p>
                            <button 
-                             onClick={() => (document.querySelector('.fixed.bottom-6.right-6 button') as HTMLElement)?.click()}
+                             onClick={() => document.querySelector('.fixed.bottom-6.right-6 button')?.click()}
                              className="text-xs font-bold bg-white text-green-700 px-3 py-2 rounded-lg shadow-sm hover:shadow hover:bg-green-50 transition"
                            >
                              Ask CareerBot

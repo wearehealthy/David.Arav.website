@@ -440,7 +440,7 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
                     <div className="font-bold text-purple-900 text-lg group-hover:text-purple-700">Get Everything</div>
                     <div className="text-xs text-purple-700 font-medium">Access ALL 50+ Courses & AI</div>
                   </div>
-                  <div className="font-bold text-white bg-purple-600 px-3 py-1 rounded-lg shadow-sm relative z-10">$25.00</div>
+                  <div className="font-bold text-white bg-purple-600 px-3 py-1 rounded-lg shadow-sm relative z-10">$85.00</div>
                 </button>
 
                 <button 

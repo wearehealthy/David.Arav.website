@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI } from '@google/genai';
@@ -6,299 +7,31 @@ import { createClient } from '@supabase/supabase-js';
 // ==========================================
 // 🚨 ACTION REQUIRED: API KEY SETUP 🚨
 // ==========================================
-// To use GitHub Secrets:
-// Ensure your build/deployment process injects the 'API_KEY' environment variable.
-// If running locally, you can paste a key below for testing.
+// The previous key expired.
+// 1. Go to: https://aistudio.google.com/app/apikey
+// 2. Create a new FREE key.
+// 3. Paste it inside the quotes below.
 const GEMINI_API_KEY = "PASTE_YOUR_NEW_KEY_HERE"; 
 
 const supabaseUrl = 'https://bwjjfnkuqnravvfytxbf.supabase.co';
 const supabaseKey = 'sb_publishable_9z5mRwy-X0zERNX7twZzPw_RdskfL8s';
 
 // ==========================================
-// 1. DATA & CONSTANTS
+// 1. DATA & CONSTANTS (THE PERFECT 10)
 // ==========================================
 
 const CATEGORIES = [
-  {
-    id: 'pivot-cluster',
-    title: 'The Career Pivot & Soft Skills',
-    type: 'CLUSTER',
-    courses: [
-      {
-        id: 'piv-001',
-        title: 'The Great Resignation Guide',
-        description: 'How to quit your job gracefully and find a career you actually love.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=640&q=80',
-        tags: ['Career', 'Business']
-      },
-      {
-        id: 'piv-002',
-        title: 'Resume Rescue',
-        description: 'Keywords, formatting, and storytelling to beat the ATS bots.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=640&q=80',
-        tags: ['Hiring', 'Writing']
-      },
-      {
-        id: 'piv-003',
-        title: 'Negotiation Ninja',
-        description: 'Get the salary you deserve. Scripts and strategies for the money talk.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=640&q=80',
-        tags: ['Money', 'Skills']
-      },
-      {
-        id: 'piv-004',
-        title: 'Networking for Introverts',
-        description: 'Building meaningful connections without burning out.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1515169067750-d51a73b55163?auto=format&fit=crop&w=640&q=80',
-        tags: ['Social', 'People']
-      },
-      {
-        id: 'piv-005',
-        title: 'Emotional Intelligence',
-        description: 'Reading the room and managing workplace dynamics.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=640&q=80',
-        tags: ['EQ', 'Leadership']
-      }
-    ]
-  },
-  {
-    id: 'game-cluster',
-    title: 'Board Game Design & Gamification',
-    type: 'CLUSTER',
-    courses: [
-      {
-        id: 'game-001',
-        title: 'Tabletop Mechanics 101',
-        description: 'Dice, cards, and tokens: Balancing luck and strategy.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1610890716171-6b1c9f2bd272?auto=format&fit=crop&w=640&q=80',
-        tags: ['Design', 'Creative']
-      },
-      {
-        id: 'game-002',
-        title: 'Rapid Prototyping',
-        description: 'From paper sketches to playable prototype in 24 hours.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1605806616949-1e87b487bc2a?auto=format&fit=crop&w=640&q=80',
-        tags: ['Product', 'Testing']
-      },
-      {
-        id: 'game-003',
-        title: 'The Kickstarter Launchpad',
-        description: 'Crowdfunding your game and building a community.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?auto=format&fit=crop&w=640&q=80',
-        tags: ['Business', 'Marketing']
-      },
-      {
-        id: 'game-004',
-        title: 'Gamification in Business',
-        description: 'Applying game theory to user engagement and loyalty.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1553481187-be93c21490a9?auto=format&fit=crop&w=640&q=80',
-        tags: ['Strategy', 'User']
-      },
-      {
-        id: 'game-005',
-        title: 'Playtesting Lab',
-        description: 'How to get feedback that actually improves your game.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=640&q=80',
-        tags: ['QA', 'Research']
-      }
-    ]
-  },
-  {
-    id: 'nonprofit-cluster',
-    title: 'Non-Profit & Youth Leadership',
-    type: 'CLUSTER',
-    courses: [
-      {
-        id: 'np-001',
-        title: 'Starting a Non-Profit',
-        description: 'Legal basics, 501(c)(3) status, and mission statements.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=640&q=80',
-        tags: ['Leadership', 'Law']
-      },
-      {
-        id: 'np-002',
-        title: 'Grant Writing Success',
-        description: 'How to write proposals that get funded.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=640&q=80',
-        tags: ['Writing', 'Money']
-      },
-      {
-        id: 'np-003',
-        title: 'Volunteer Management',
-        description: 'Recruiting, training, and retaining unpaid teams.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1529390079861-591de354faf5?auto=format&fit=crop&w=640&q=80',
-        tags: ['People', 'HR']
-      },
-      {
-        id: 'np-004',
-        title: 'Community Organizing',
-        description: 'Grassroots movements and creating social change.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1531206715517-5c0ba140b2b8?auto=format&fit=crop&w=640&q=80',
-        tags: ['Social', 'Impact']
-      },
-      {
-        id: 'np-005',
-        title: 'Fundraising Fundamentals',
-        description: 'Events, donors, and sustainable giving models.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=640&q=80',
-        tags: ['Finance', 'Sales']
-      }
-    ]
-  },
-  {
-    id: 'pm-cluster',
-    title: 'Project Management',
-    type: 'CLUSTER',
-    courses: [
-      {
-        id: 'pm-001',
-        title: 'Agile & Scrum Boot Camp',
-        description: 'Sprints, standups, and managing iterative workflows.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=640&q=80',
-        tags: ['Agile', 'Tech']
-      },
-      {
-        id: 'pm-002',
-        title: 'Risk Management',
-        description: 'Identifying and mitigating project threats before they happen.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=640&q=80',
-        tags: ['Planning', 'Logic']
-      },
-      {
-        id: 'pm-003',
-        title: 'Stakeholder Whispering',
-        description: 'Communication strategies for keeping everyone happy.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=640&q=80',
-        tags: ['Talk', 'Leadership']
-      },
-      {
-        id: 'pm-004',
-        title: 'Tool Time: Jira & Asana',
-        description: 'Mastering the software that keeps projects on track.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=640&q=80',
-        tags: ['Software', 'Productivity']
-      },
-      {
-        id: 'pm-005',
-        title: 'The PMP Prep Primer',
-        description: 'Foundational knowledge for professional certification.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=640&q=80',
-        tags: ['Cert', 'Career']
-      }
-    ]
-  },
-  {
-    id: 'marketing-cluster',
-    title: 'Digital Marketing',
-    type: 'CLUSTER',
-    courses: [
-      {
-        id: 'mkt-001',
-        title: 'SEO Demystified',
-        description: 'Ranking on Google and understanding organic traffic.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1571786256017-aee7a0c009b6?auto=format&fit=crop&w=640&q=80',
-        tags: ['Search', 'Tech']
-      },
-      {
-        id: 'mkt-002',
-        title: 'Social Media Empire',
-        description: 'Growth strategies for TikTok, Instagram, and LinkedIn.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=640&q=80',
-        tags: ['Social', 'Brand']
-      },
-      {
-        id: 'mkt-003',
-        title: 'Email Marketing Flows',
-        description: 'Converting leads into sales with automation.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1563986768494-4dee2763ff3f?auto=format&fit=crop&w=640&q=80',
-        tags: ['Sales', 'Writing']
-      },
-      {
-        id: 'mkt-004',
-        title: 'PPC & Ad Strategy',
-        description: 'How to spend money to make money with paid ads.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1533750349088-cd871a92f312?auto=format&fit=crop&w=640&q=80',
-        tags: ['Ads', 'Data']
-      },
-      {
-        id: 'mkt-005',
-        title: 'Content is King',
-        description: 'Storytelling and content calendars for brands.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1493612276216-ee3925520721?auto=format&fit=crop&w=640&q=80',
-        tags: ['Creative', 'Media']
-      }
-    ]
-  },
+  // --- EXISTING KEPT ---
   {
     id: 'restaurant-cluster',
     title: 'Restaurant',
     type: 'CLUSTER',
     courses: [
-      {
-        id: 'rest-001',
-        title: 'Open Your Own Restaurant',
-        description: 'A step-by-step guide to location, menu, and hiring.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=640&q=80',
-        tags: ['Business', 'Food']
-      },
-      {
-        id: 'rest-002',
-        title: 'Head Chef Training',
-        description: 'Managing a high-pressure kitchen environment.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1583394293214-28ded15ee548?auto=format&fit=crop&w=640&q=80',
-        tags: ['Cooking', 'Leadership']
-      },
-      {
-        id: 'rest-003',
-        title: 'Coffee Shop Culture',
-        description: 'Barista skills and roasting your own beans.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=640&q=80',
-        tags: ['Drinks', 'Cafe']
-      },
-      {
-        id: 'rest-004',
-        title: 'Artisan Bakery',
-        description: 'Mastering sourdough, pastries, and running a bakery.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=640&q=80',
-        tags: ['Baking', 'Business']
-      },
-      {
-        id: 'rest-005',
-        title: 'Food Truck Revolution',
-        description: 'Mobile food business basics.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?auto=format&fit=crop&w=640&q=80',
-        tags: ['Startup', 'Food']
-      }
+      { id: 'rest-001', title: 'Open Your Own Restaurant', description: 'A step-by-step guide to location, menu, and hiring.', price: 2.50, image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=640&q=80', tags: ['Business', 'Food'] },
+      { id: 'rest-002', title: 'Head Chef Training', description: 'Managing a high-pressure kitchen environment.', price: 2.50, image: 'https://images.unsplash.com/photo-1583394293214-28ded15ee548?auto=format&fit=crop&w=640&q=80', tags: ['Cooking', 'Leadership'] },
+      { id: 'rest-003', title: 'Coffee Shop Culture', description: 'Barista skills and roasting your own beans.', price: 2.50, image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=640&q=80', tags: ['Drinks', 'Cafe'] },
+      { id: 'rest-004', title: 'Artisan Bakery', description: 'Mastering sourdough, pastries, and running a bakery.', price: 2.50, image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=640&q=80', tags: ['Baking', 'Business'] },
+      { id: 'rest-005', title: 'Food Truck Revolution', description: 'Mobile food business basics.', price: 2.50, image: 'https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?auto=format&fit=crop&w=640&q=80', tags: ['Startup', 'Food'] }
     ]
   },
   {
@@ -306,46 +39,11 @@ const CATEGORIES = [
     title: 'Podcasting & Modern Media',
     type: 'CLUSTER',
     courses: [
-      {
-        id: 'pod-001',
-        title: 'Start Your Podcast',
-        description: 'From buying a mic to publishing on Spotify. Your voice matters.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1589903308904-1010c2294adc?auto=format&fit=crop&w=640&q=80',
-        tags: ['Media', 'Audio']
-      },
-      {
-        id: 'pod-002',
-        title: 'Viral Content Creation',
-        description: 'How to make short clips that get millions of views.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=640&q=80',
-        tags: ['Social', 'Video']
-      },
-      {
-        id: 'pod-003',
-        title: 'Streamer Setup 101',
-        description: 'Lighting, OBS, and engaging your chat live.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=640&q=80',
-        tags: ['Live', 'Tech']
-      },
-      {
-        id: 'pod-004',
-        title: 'Interview Techniques',
-        description: 'How to talk to guests and get great stories.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=640&q=80',
-        tags: ['Skills', 'Talk']
-      },
-      {
-        id: 'pod-005',
-        title: 'Monetize Your Brand',
-        description: 'Sponsorships, merch, and making money online.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=640&q=80',
-        tags: ['Business', 'Money']
-      }
+      { id: 'pod-001', title: 'Start Your Podcast', description: 'From buying a mic to publishing on Spotify.', price: 2.50, image: 'https://images.unsplash.com/photo-1589903308904-1010c2294adc?auto=format&fit=crop&w=640&q=80', tags: ['Media', 'Audio'] },
+      { id: 'pod-002', title: 'Viral Content Creation', description: 'How to make short clips that get millions of views.', price: 2.50, image: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=640&q=80', tags: ['Social', 'Video'] },
+      { id: 'pod-003', title: 'Streamer Setup 101', description: 'Lighting, OBS, and engaging your chat live.', price: 2.50, image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=640&q=80', tags: ['Live', 'Tech'] },
+      { id: 'pod-004', title: 'Interview Techniques', description: 'How to talk to guests and get great stories.', price: 2.50, image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=640&q=80', tags: ['Skills', 'Talk'] },
+      { id: 'pod-005', title: 'Monetize Your Brand', description: 'Sponsorships, merch, and making money online.', price: 2.50, image: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=640&q=80', tags: ['Business', 'Money'] }
     ]
   },
   {
@@ -353,46 +51,11 @@ const CATEGORIES = [
     title: 'Computer Science',
     type: 'CLUSTER',
     courses: [
-      {
-        id: 'cs-000',
-        title: 'General Overview: The Digital World',
-        description: 'Not sure which tech path to take? This course surveys everything from code to hardware to help you decide.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=640&q=80',
-        tags: ['General', 'Overview']
-      },
-      {
-        id: 'cs-101',
-        title: 'Introduction to Algorithms',
-        description: 'Learn the fundamentals of sorting, searching, and graph algorithms.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&w=640&q=80',
-        tags: ['Coding', 'Logic']
-      },
-      {
-        id: 'cs-202',
-        title: 'AI & Machine Learning',
-        description: 'Understand neural networks and how to build intelligent agents.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=640&q=80',
-        tags: ['AI', 'Python']
-      },
-      {
-        id: 'cs-303',
-        title: 'Cybersecurity Basics',
-        description: 'Protect systems from attacks and understand encryption.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=640&q=80',
-        tags: ['Security', 'Network']
-      },
-      {
-        id: 'cs-404',
-        title: 'Full Stack Web Dev',
-        description: 'Build complete websites from database to user interface.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1547658719-da2b51169166?auto=format&fit=crop&w=640&q=80',
-        tags: ['Web', 'Design']
-      }
+      { id: 'cs-000', title: 'General Overview: The Digital World', description: 'Everything from code to hardware.', price: 2.50, image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=640&q=80', tags: ['General', 'Overview'] },
+      { id: 'cs-101', title: 'Introduction to Algorithms', description: 'Sorting, searching, and graph algorithms.', price: 2.50, image: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&w=640&q=80', tags: ['Coding', 'Logic'] },
+      { id: 'cs-202', title: 'AI & Machine Learning', description: 'Neural networks and intelligent agents.', price: 2.50, image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=640&q=80', tags: ['AI', 'Python'] },
+      { id: 'cs-303', title: 'Cybersecurity Basics', description: 'Encryption and protecting systems.', price: 2.50, image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=640&q=80', tags: ['Security', 'Network'] },
+      { id: 'cs-404', title: 'Full Stack Web Dev', description: 'Build complete websites from scratch.', price: 2.50, image: 'https://images.unsplash.com/photo-1547658719-da2b51169166?auto=format&fit=crop&w=640&q=80', tags: ['Web', 'Design'] }
     ]
   },
   {
@@ -400,46 +63,11 @@ const CATEGORIES = [
     title: 'Business Administration',
     type: 'CLUSTER',
     courses: [
-      {
-        id: 'bus-000',
-        title: 'General Overview: Corporate World',
-        description: 'Learn the language of money and management before diving deep.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=640&q=80',
-        tags: ['General', 'Money']
-      },
-      {
-        id: 'bus-101',
-        title: 'Marketing Strategy',
-        description: 'Master the 4 Ps of marketing and digital outreach.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1533750516457-a7f992034fec?auto=format&fit=crop&w=640&q=80',
-        tags: ['Marketing', 'Strategy']
-      },
-      {
-        id: 'bus-303',
-        title: 'Financial Accounting',
-        description: 'Read balance sheets and manage corporate finances effectively.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1554224155-98406858d0ade?auto=format&fit=crop&w=640&q=80',
-        tags: ['Finance', 'Math']
-      },
-      {
-        id: 'bus-404',
-        title: 'Entrepreneurship',
-        description: 'How to start a business from scratch and not fail immediately.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=640&q=80',
-        tags: ['Startup', 'Leadership']
-      },
-      {
-        id: 'bus-505',
-        title: 'Project Management',
-        description: 'Agile methodologies and leading teams to success.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=640&q=80',
-        tags: ['Management', 'Teams']
-      }
+      { id: 'bus-000', title: 'Corporate World Overview', description: 'The language of money and management.', price: 2.50, image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=640&q=80', tags: ['General', 'Money'] },
+      { id: 'bus-101', title: 'Economics 101', description: 'Supply, demand, and market forces.', price: 2.50, image: 'https://images.unsplash.com/photo-1611974765270-ca1258634369?auto=format&fit=crop&w=640&q=80', tags: ['Economics', 'Theory'] },
+      { id: 'bus-303', title: 'Financial Accounting', description: 'Read balance sheets and manage finances.', price: 2.50, image: 'https://images.unsplash.com/photo-1554224155-98406858d0ade?auto=format&fit=crop&w=640&q=80', tags: ['Finance', 'Math'] },
+      { id: 'bus-404', title: 'Entrepreneurship', description: 'Starting a business from scratch.', price: 2.50, image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=640&q=80', tags: ['Startup', 'Leadership'] },
+      { id: 'bus-505', title: 'International Business', description: 'Operating across borders and cultures.', price: 2.50, image: 'https://images.unsplash.com/photo-1529101091760-61df6be34f84?auto=format&fit=crop&w=640&q=80', tags: ['Global', 'Trade'] }
     ]
   },
   {
@@ -447,46 +75,74 @@ const CATEGORIES = [
     title: 'Creative Arts',
     type: 'CLUSTER',
     courses: [
-      {
-        id: 'art-000',
-        title: 'General Overview: Unleashing Creativity',
-        description: 'Try a little bit of everything to find your medium.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=640&q=80',
-        tags: ['General', 'Art']
-      },
-      {
-        id: 'art-001',
-        title: 'Digital Painting',
-        description: 'From sketching to final rendering using digital tools.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1515462277126-2dd0c162007a?auto=format&fit=crop&w=640&q=80',
-        tags: ['Design', 'Creative']
-      },
-      {
-        id: 'art-002',
-        title: 'Photography 101',
-        description: 'Mastering composition and lighting for stunning photos.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=640&q=80',
-        tags: ['Photo', 'Camera']
-      },
-      {
-        id: 'art-003',
-        title: 'Sculpting Basics',
-        description: 'Working with clay and 3D forms.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?auto=format&fit=crop&w=640&q=80',
-        tags: ['3D', 'Clay']
-      },
-      {
-        id: 'art-004',
-        title: 'Art History',
-        description: 'From Renaissance to Modernism.',
-        price: 2.50,
-        image: 'https://images.unsplash.com/photo-1518998053901-5348d3969105?auto=format&fit=crop&w=640&q=80',
-        tags: ['History', 'Culture']
-      }
+      { id: 'art-000', title: 'Unleashing Creativity', description: 'Find your medium.', price: 2.50, image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=640&q=80', tags: ['General', 'Art'] },
+      { id: 'art-001', title: 'Digital Painting', description: 'From sketching to final rendering.', price: 2.50, image: 'https://images.unsplash.com/photo-1515462277126-2dd0c162007a?auto=format&fit=crop&w=640&q=80', tags: ['Design', 'Creative'] },
+      { id: 'art-002', title: 'Photography 101', description: 'Composition and lighting.', price: 2.50, image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=640&q=80', tags: ['Photo', 'Camera'] },
+      { id: 'art-003', title: 'Sculpting Basics', description: 'Working with clay and 3D forms.', price: 2.50, image: 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?auto=format&fit=crop&w=640&q=80', tags: ['3D', 'Clay'] },
+      { id: 'art-004', title: 'Art History', description: 'From Renaissance to Modernism.', price: 2.50, image: 'https://images.unsplash.com/photo-1518998053901-5348d3969105?auto=format&fit=crop&w=640&q=80', tags: ['History', 'Culture'] }
+    ]
+  },
+
+  // --- NEW ADDITIONS (REPLACING WEAK ONES) ---
+  
+  {
+    id: 'pivot-cluster',
+    title: 'The Career Pivot & Soft Skills',
+    type: 'CLUSTER',
+    courses: [
+      { id: 'piv-001', title: 'Resume & Cover Letter Mastery', description: 'Stand out in the application pile.', price: 2.50, image: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=640&q=80', tags: ['Career', 'Writing'] },
+      { id: 'piv-002', title: 'Interview Like a Pro', description: 'Answer tough questions with confidence.', price: 2.50, image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=640&q=80', tags: ['Speaking', 'Confidence'] },
+      { id: 'piv-003', title: 'Networking & LinkedIn', description: 'Building connections that get you hired.', price: 2.50, image: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=640&q=80', tags: ['Social', 'Networking'] },
+      { id: 'piv-004', title: 'Negotiating Your Salary', description: 'Get paid what you are worth.', price: 2.50, image: 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?auto=format&fit=crop&w=640&q=80', tags: ['Money', 'Sales'] },
+      { id: 'piv-005', title: 'Emotional Intelligence', description: 'Navigating office politics and stress.', price: 2.50, image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=640&q=80', tags: ['Mind', 'Soft Skills'] }
+    ]
+  },
+  {
+    id: 'game-cluster',
+    title: 'Board Game Design & Gamification',
+    type: 'CLUSTER',
+    courses: [
+      { id: 'gam-001', title: 'Game Mechanics 101', description: 'Rules, loops, and player incentives.', price: 2.50, image: 'https://images.unsplash.com/photo-1610890716171-6b1bb98a7f31?auto=format&fit=crop&w=640&q=80', tags: ['Design', 'Logic'] },
+      { id: 'gam-002', title: 'Rapid Prototyping', description: 'Paper, scissors, and testing ideas fast.', price: 2.50, image: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=640&q=80', tags: ['Creative', 'Hands-on'] },
+      { id: 'gam-003', title: 'Playtesting Science', description: 'Gathering data to balance your game.', price: 2.50, image: 'https://images.unsplash.com/photo-1605901309584-818e25960b8f?auto=format&fit=crop&w=640&q=80', tags: ['Data', 'Testing'] },
+      { id: 'gam-004', title: 'Kickstarter Success', description: 'Crowdfunding your tabletop project.', price: 2.50, image: 'https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?auto=format&fit=crop&w=640&q=80', tags: ['Business', 'Marketing'] },
+      { id: 'gam-005', title: 'Gamification for Biz', description: 'Applying game logic to non-game contexts.', price: 2.50, image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=640&q=80', tags: ['Business', 'Strategy'] }
+    ]
+  },
+  {
+    id: 'nonprofit-cluster',
+    title: 'Non-Profit & Youth Leadership',
+    type: 'CLUSTER',
+    courses: [
+      { id: 'np-001', title: 'Starting a Non-Profit', description: 'Legal basics and mission statements.', price: 2.50, image: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=640&q=80', tags: ['Legal', 'Charity'] },
+      { id: 'np-002', title: 'Grant Writing Basics', description: 'Securing funding for your cause.', price: 2.50, image: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=640&q=80', tags: ['Writing', 'Money'] },
+      { id: 'np-003', title: 'Volunteer Management', description: 'Recruiting and retaining help.', price: 2.50, image: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=640&q=80', tags: ['People', 'Leadership'] },
+      { id: 'np-004', title: 'Community Outreach', description: 'Building grassroots support.', price: 2.50, image: 'https://images.unsplash.com/photo-1531206715517-5c0ba140b2b8?auto=format&fit=crop&w=640&q=80', tags: ['Marketing', 'Social'] },
+      { id: 'np-005', title: 'Youth Mentorship', description: 'Guiding the next generation.', price: 2.50, image: 'https://images.unsplash.com/photo-1529390003875-57486907699b?auto=format&fit=crop&w=640&q=80', tags: ['Teaching', 'Service'] }
+    ]
+  },
+  {
+    id: 'pm-cluster',
+    title: 'Project Management',
+    type: 'CLUSTER',
+    courses: [
+      { id: 'pm-001', title: 'Agile & Scrum', description: 'Modern workflows for fast teams.', price: 2.50, image: 'https://images.unsplash.com/photo-1512758017271-d7b84c2113f1?auto=format&fit=crop&w=640&q=80', tags: ['Process', 'Tech'] },
+      { id: 'pm-002', title: 'Risk Management', description: 'Identifying and mitigating problems.', price: 2.50, image: 'https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?auto=format&fit=crop&w=640&q=80', tags: ['Strategy', 'Analysis'] },
+      { id: 'pm-003', title: 'Stakeholder Comms', description: 'Keeping everyone happy and informed.', price: 2.50, image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=640&q=80', tags: ['Communication', 'Leadership'] },
+      { id: 'pm-004', title: 'Software Tools (Jira)', description: 'Mastering the tools of the trade.', price: 2.50, image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=640&q=80', tags: ['Tech', 'Tools'] },
+      { id: 'pm-005', title: 'Resource Allocation', description: 'Budgeting time and money effectively.', price: 2.50, image: 'https://images.unsplash.com/photo-1554224154-26032ffc0d07?auto=format&fit=crop&w=640&q=80', tags: ['Money', 'Planning'] }
+    ]
+  },
+  {
+    id: 'marketing-cluster',
+    title: 'Digital Marketing',
+    type: 'CLUSTER',
+    courses: [
+      { id: 'dm-001', title: 'SEO Fundamentals', description: 'Ranking higher on Google Search.', price: 2.50, image: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&w=640&q=80', tags: ['Tech', 'Search'] },
+      { id: 'dm-002', title: 'Social Media Strategy', description: 'Building a brand on Instagram & TikTok.', price: 2.50, image: 'https://images.unsplash.com/photo-1611162616475-46b635cb6868?auto=format&fit=crop&w=640&q=80', tags: ['Social', 'Brand'] },
+      { id: 'dm-003', title: 'Email Marketing', description: 'Newsletters that convert to sales.', price: 2.50, image: 'https://images.unsplash.com/photo-1563986768494-4dee46a38531?auto=format&fit=crop&w=640&q=80', tags: ['Writing', 'Sales'] },
+      { id: 'dm-004', title: 'PPC Advertising', description: 'Google Ads and paid traffic basics.', price: 2.50, image: 'https://images.unsplash.com/photo-1555421689-d68471e189f2?auto=format&fit=crop&w=640&q=80', tags: ['Ads', 'Data'] },
+      { id: 'dm-005', title: 'Content Strategy', description: 'Planning a calendar of engagement.', price: 2.50, image: 'https://images.unsplash.com/photo-1542435503-956c469947f6?auto=format&fit=crop&w=640&q=80', tags: ['Planning', 'Creative'] }
     ]
   }
 ];
@@ -504,7 +160,6 @@ let currentTier = 'GUEST';
 let currentInterest = undefined;
 
 const initializeChat = (tier, interest) => {
-  // Use the key from the variable at the top of the file or ENV var for GitHub Secrets
   const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) || GEMINI_API_KEY || '';
 
   if (!apiKey || apiKey.includes("PASTE_YOUR_NEW_KEY_HERE")) {
@@ -518,40 +173,39 @@ const initializeChat = (tier, interest) => {
 
   let systemInstruction = "";
 
-  // Treat 'ALL_ACCESS', 'BUNDLE', and 'SINGLE' as paid tiers for the purpose of the AI
-  const isPaid = tier === 'ALL_ACCESS' || tier === 'BUNDLE' || tier === 'SINGLE' || tier === 'PAID';
+  // Check tiers
+  const isPaid = tier === 'BUNDLE' || tier === 'SINGLE' || tier === 'PAID';
+  const isUnlimited = tier === 'UNLIMITED';
 
-  if (isPaid) {
-    let curriculumContext = "";
+  if (isUnlimited) {
+     systemInstruction = `You are CareerBot, an expert academic advisor with UNLIMITED access.
+      You have access to ALL courses in the catalog, including Career Pivots, Game Design, Non-Profit, PM, Marketing, Restaurant, Podcasting, CS, Business, and Arts.
+      
+      YOUR ROLE:
+      1. You are the ultimate tutor. You can explain ANY concept from ANY of these fields.
+      2. Be encouraging, highly intelligent, and versatile.
+      3. The user has paid for the highest tier, so provide detailed, premium answers.`;
+  }
+  else if (isPaid && interest) {
+    const cluster = CATEGORIES.find(c => c.title === interest);
     
-    if (interest) {
-        const cluster = CATEGORIES.find(c => c.title === interest);
-        if (cluster) {
-             curriculumContext = cluster.courses.map(c => 
-                `- Course Title: "${c.title}"\n  Description: ${c.description}\n  Topics/Tags: ${c.tags.join(', ')}`
-            ).join('\n\n');
-        }
-    }
+    if (cluster) {
+      const curriculum = cluster.courses.map(c => 
+        `- Course Title: "${c.title}"\n  Description: ${c.description}\n  Topics/Tags: ${c.tags.join(', ')}`
+      ).join('\n\n');
 
-    if (tier === 'ALL_ACCESS') {
-         curriculumContext = "The user has ALL ACCESS. They can ask about ANY course in the system.";
-    }
-
-    if (curriculumContext || tier === 'ALL_ACCESS') {
-      // TUNED AI PERSONA FOR SCHOOL PROJECT
       systemInstruction = `You are CareerBot, a friendly and expert academic advisor.
       
-      User Tier: ${tier}
-      User Interest: ${interest || "All Areas"}
+      You have access to the user's specific curriculum for "${interest}". 
       
       CURRICULUM DATA:
-      ${curriculumContext}
+      ${curriculum}
       
       YOUR ROLE:
       1. Explain concepts from the courses above simply.
       2. If the user is in "Learning Mode" (viewing a module), help them understand specific terms from that module.
       3. Be encouraging and use emojis occasionally to keep the vibe positive 🎓 ✨.
-      4. If asked about a topic NOT in the list above (and they are not All Access), politely steer them back to their chosen path.
+      4. If asked about a topic NOT in the list above, politely steer them back to their chosen path: "${interest}".
       `;
     } else {
         systemInstruction = "You are CareerBot. You are a helpful AI tutor. The user has a premium account. Help them with general career advice.";
@@ -587,7 +241,6 @@ const sendMessageToAgent = async (message) => {
     return result.text || "I couldn't think of a response.";
   } catch (error) {
     console.error("Gemini Error:", error);
-    // Return specific error message to the user for debugging
     const errorMessage = error instanceof Error ? error.message : String(error);
     
     if (errorMessage.includes("403") || errorMessage.includes("leaked") || errorMessage.includes("expired")) {
@@ -616,7 +269,6 @@ const Button = ({
     secondary: "bg-orange-400 text-white hover:bg-orange-500 focus:ring-orange-300 shadow-md",
     outline: "border-2 border-green-200 bg-white text-green-700 hover:bg-green-50 focus:ring-green-400",
     ghost: "text-green-700 hover:bg-green-100",
-    gold: "bg-yellow-400 text-yellow-900 hover:bg-yellow-500 focus:ring-yellow-300 shadow-md hover:shadow-xl",
   };
 
   const sizes = {
@@ -696,22 +348,24 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
 
     try {
       const generatedEmail = generateEmail(username);
+      // Logic for saving 'UNLIMITED' tier
+      const finalInterest = selectedTier === 'UNLIMITED' ? 'All Access' : interest;
 
       if (mode === 'SIGNUP') {
         if (!username.trim() || !password.trim()) throw new Error('Please fill in all fields.');
-        // Interest not required for ALL_ACCESS
-        if (selectedTier !== 'ALL_ACCESS' && !interest) throw new Error('Please select an Interest.');
+        // If UNLIMITED, we don't strictly need an interest, but Supabase schema might expect one.
+        if (selectedTier !== 'UNLIMITED' && !interest) throw new Error('Please select an Interest.');
 
         const { data, error: signUpError } = await supabase.auth.signUp({
           email: generatedEmail,
           password,
           options: {
-            data: { username: username, tier: selectedTier, interest: selectedTier === 'ALL_ACCESS' ? 'Everything' : interest }
+            data: { username: username, tier: selectedTier, interest: finalInterest }
           }
         });
 
         if (signUpError) {
-             forceMockLogin(selectedTier, interest);
+             forceMockLogin(selectedTier, finalInterest);
              return;
         }
         
@@ -727,15 +381,16 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
         });
 
         if (signInError) {
-             // Default to BUNDLE if mock logging in
-             forceMockLogin('BUNDLE', interest);
+             // Fallback for login failures in demo
+             forceMockLogin('PAID', interest);
              return;
         }
         
         onClose();
       }
     } catch (err) {
-      forceMockLogin(selectedTier || 'BUNDLE', interest); // Aggressive fallback for demo
+      const finalInterest = selectedTier === 'UNLIMITED' ? 'All Access' : interest;
+      forceMockLogin(selectedTier || 'PAID', finalInterest);
     } finally {
       setLoading(false);
     }
@@ -767,40 +422,41 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
         
         <div className="p-6">
           {view === 'SELECT_PLAN' && mode === 'SIGNUP' ? (
-            <div className="space-y-4">
-               <div className="text-center">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl">🚀</div>
-                <p className="text-slate-500 text-sm mb-4">Select a plan to access CareerFinder</p>
+            <div className="space-y-6">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🚀</div>
+                <p className="text-slate-500 text-sm">Select a plan to access CareerFinder</p>
               </div>
-
-               {/* BUY ALL BUTTON */}
-               <button 
-                  onClick={() => handlePlanSelect('ALL_ACCESS')}
-                  className="w-full flex items-center justify-between p-4 border-2 border-yellow-400 bg-yellow-50 rounded-xl hover:bg-yellow-100 transition shadow-md group relative overflow-hidden"
+              
+              <div className="space-y-4">
+                
+                {/* BUY ALL OPTION */}
+                <button 
+                  onClick={() => handlePlanSelect('UNLIMITED')}
+                  className="w-full flex items-center justify-between p-5 border-2 border-purple-500 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl hover:shadow-lg hover:scale-[1.02] transition-all group relative overflow-hidden"
                 >
-                  <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">BEST VALUE</div>
-                  <div className="text-left">
-                    <div className="font-bold text-yellow-900 text-lg group-hover:text-yellow-700">All Access Pass</div>
-                    <div className="text-xs text-yellow-800 font-medium">Unlock EVERYTHING forever</div>
+                  <div className="absolute top-0 right-0 bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">BEST VALUE</div>
+                  <div className="text-left relative z-10">
+                    <div className="font-bold text-purple-900 text-lg group-hover:text-purple-700">Get Everything</div>
+                    <div className="text-xs text-purple-700 font-medium">Access ALL 50+ Courses & AI</div>
                   </div>
-                  <div className="font-bold text-yellow-800 bg-white/80 px-3 py-1 rounded-lg shadow-sm">$85.00</div>
+                  <div className="font-bold text-white bg-purple-600 px-3 py-1 rounded-lg shadow-sm relative z-10">$25.00</div>
                 </button>
 
-              <div className="space-y-3">
                 <button 
                   onClick={() => handlePlanSelect('BUNDLE')}
-                  className="w-full flex items-center justify-between p-4 border-2 border-green-500 bg-green-50 rounded-xl hover:bg-green-100 transition shadow-sm group"
+                  className="w-full flex items-center justify-between p-5 border-2 border-green-500 bg-green-50 rounded-xl hover:bg-green-100 transition shadow-sm group"
                 >
                   <div className="text-left">
-                    <div className="font-bold text-green-900 text-md group-hover:text-green-700">Cluster Bundle</div>
-                    <div className="text-xs text-green-700 font-medium">5 Courses + AI Tutor</div>
+                    <div className="font-bold text-green-900 text-lg group-hover:text-green-700">Cluster Bundle</div>
+                    <div className="text-xs text-green-700 font-medium">Access 1 Topic (5 Courses)</div>
                   </div>
                   <div className="font-bold text-green-700 bg-white px-3 py-1 rounded-lg shadow-sm">$10.00</div>
                 </button>
 
                 <button 
                   onClick={() => handlePlanSelect('SINGLE')}
-                  className="w-full flex items-center justify-between p-4 border-2 border-orange-200 bg-orange-50 rounded-xl hover:border-orange-400 hover:bg-orange-100 transition shadow-sm group"
+                  className="w-full flex items-center justify-between p-5 border-2 border-orange-200 bg-orange-50 rounded-xl hover:border-orange-400 hover:bg-orange-100 transition shadow-sm group"
                 >
                   <div className="text-left">
                     <div className="font-bold text-slate-800 group-hover:text-orange-900">Single Course</div>
@@ -811,7 +467,7 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
 
                 <button 
                   onClick={() => handlePlanSelect('GUEST')}
-                  className="w-full flex items-center justify-between p-4 border-2 border-slate-200 bg-slate-50 rounded-xl hover:border-slate-400 hover:bg-slate-100 transition shadow-sm group"
+                  className="w-full flex items-center justify-between p-5 border-2 border-slate-200 bg-slate-50 rounded-xl hover:border-slate-400 hover:bg-slate-100 transition shadow-sm group"
                 >
                   <div className="text-left">
                     <div className="font-bold text-slate-700 group-hover:text-slate-900">Demo Access</div>
@@ -832,14 +488,14 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
               {mode === 'SIGNUP' && (
                 <div className="text-center mb-6">
                   <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
-                      selectedTier === 'ALL_ACCESS' ? 'bg-yellow-100 text-yellow-700' :
+                      selectedTier === 'UNLIMITED' ? 'bg-purple-100 text-purple-700' :
                       selectedTier === 'BUNDLE' ? 'bg-green-100 text-green-600' : 
                       selectedTier === 'SINGLE' ? 'bg-orange-100 text-orange-600' : 
                       'bg-slate-100 text-slate-600'
                     }`}>
                     Selected: {
-                        selectedTier === 'ALL_ACCESS' ? 'All Access Pass ($85)' :
-                        selectedTier === 'BUNDLE' ? 'Complete Bundle ($10)' : 
+                        selectedTier === 'UNLIMITED' ? 'Unlock Everything ($25)' :
+                        selectedTier === 'BUNDLE' ? 'Course Bundle ($10)' : 
                         selectedTier === 'SINGLE' ? 'Single Course ($2.50)' : 
                         'Demo Mode (Free)'
                     }
@@ -872,7 +528,7 @@ const Modal = ({ isOpen, onClose, initialMode, preselectedInterest }) => {
                 />
               </div>
 
-              {mode === 'SIGNUP' && selectedTier !== 'ALL_ACCESS' && (
+              {mode === 'SIGNUP' && selectedTier !== 'UNLIMITED' && (
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     {preselectedInterest ? 'Selected Bundle (Auto-filled)' : 'Select Your Course Bundle'}
@@ -933,7 +589,7 @@ const ChatWidget = ({ user, onLoginRequest }) => {
   const [isOpen, setIsOpen] = useState(false);
   
   const userTier = user ? user.tier : 'GUEST';
-  const isPaid = userTier === 'ALL_ACCESS' || userTier === 'BUNDLE' || userTier === 'SINGLE' || userTier === 'PAID';
+  const isPaid = userTier === 'BUNDLE' || userTier === 'SINGLE' || userTier === 'PAID' || userTier === 'UNLIMITED';
   
   const [messages, setMessages] = useState([
     { 
@@ -956,7 +612,7 @@ const ChatWidget = ({ user, onLoginRequest }) => {
   }, [messages, isOpen]);
 
   useEffect(() => {
-    const isNowPaid = userTier === 'ALL_ACCESS' || userTier === 'BUNDLE' || userTier === 'SINGLE' || userTier === 'PAID';
+    const isNowPaid = userTier === 'BUNDLE' || userTier === 'SINGLE' || userTier === 'PAID' || userTier === 'UNLIMITED';
      setMessages([{ 
       role: 'model', 
       text: !isNowPaid 
@@ -1139,7 +795,6 @@ const App = () => {
                     tier: u.tier,
                     interest: u.interest
                 });
-                // If we found a mock user, we don't necessarily wait for supabase
             } catch (e) {
                 localStorage.removeItem('careerfinder_mock_user');
             }
@@ -1455,8 +1110,7 @@ const App = () => {
     e.currentTarget.src = "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=640&q=80";
   };
 
-  // User is paid if they have any paid tier
-  const isUserPaid = user && (user.tier === 'ALL_ACCESS' || user.tier === 'BUNDLE' || user.tier === 'SINGLE' || user.tier === 'PAID');
+  const isUserPaid = user && (user.tier === 'BUNDLE' || user.tier === 'SINGLE' || user.tier === 'PAID' || user.tier === 'UNLIMITED');
 
   return (
     <div className="min-h-screen flex flex-col bg-green-50 font-sans text-slate-800">
@@ -1490,9 +1144,9 @@ const App = () => {
                     <span className="text-sm font-bold text-green-900">{user.name}</span>
                     <div className="flex items-center gap-1">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${isUserPaid ? 'bg-orange-100 text-orange-700' : 'bg-slate-200 text-slate-600'}`}>
-                        {user.tier === 'ALL_ACCESS' ? 'All Access' : user.tier === 'BUNDLE' ? 'Full Bundle' : (user.tier === 'SINGLE' ? 'Single Course' : 'Guest')}
+                        {user.tier === 'UNLIMITED' ? 'All Access' : user.tier === 'BUNDLE' ? 'Full Bundle' : (user.tier === 'SINGLE' ? 'Single Course' : 'Guest')}
                       </span>
-                      {user.interest && user.tier !== 'ALL_ACCESS' && (
+                      {user.interest && (
                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 max-w-[100px] truncate">
                            {user.interest}
                          </span>

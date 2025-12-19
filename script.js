@@ -17,7 +17,7 @@ const supabaseUrl = 'https://bwjjfnkuqnravvfytxbf.supabase.co';
 const supabaseKey = 'sb_publishable_9z5mRwy-X0zERNX7twZzPw_RdskfL8s';
 
 // ==========================================
-// 1. DATA & CONSTANTS (THE PERFECT 10)
+// 1. DATA & CONSTANTS
 // ==========================================
 
 const CATEGORIES = [
@@ -82,9 +82,6 @@ const CATEGORIES = [
       { id: 'art-004', title: 'Art History', description: 'From Renaissance to Modernism.', price: 2.50, image: 'https://images.unsplash.com/photo-1518998053901-5348d3969105?auto=format&fit=crop&w=640&q=80', tags: ['History', 'Culture'] }
     ]
   },
-
-  // --- NEW ADDITIONS (REPLACING WEAK ONES) ---
-  
   {
     id: 'pivot-cluster',
     title: 'The Career Pivot & Soft Skills',
@@ -160,7 +157,19 @@ let currentTier = 'GUEST';
 let currentInterest = undefined;
 
 const initializeChat = (tier, interest) => {
-  const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) || GEMINI_API_KEY || '';
+  // Safe environment check for browser + fallback to hardcoded key
+  let apiKey = '';
+  try {
+     if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+        apiKey = process.env.API_KEY;
+     }
+  } catch (e) {
+     // Ignore process error in browser
+  }
+  
+  if (!apiKey) {
+      apiKey = GEMINI_API_KEY;
+  }
 
   if (!apiKey) {
     console.warn("API Key is missing. Please check script.js API configuration.");
@@ -169,64 +178,69 @@ const initializeChat = (tier, interest) => {
 
   currentTier = tier;
   currentInterest = interest;
-  const ai = new GoogleGenAI({ apiKey });
+  
+  try {
+      const ai = new GoogleGenAI({ apiKey });
 
-  let systemInstruction = "";
+      let systemInstruction = "";
 
-  // Check tiers
-  const isPaid = tier === 'BUNDLE' || tier === 'SINGLE' || tier === 'PAID';
-  const isUnlimited = tier === 'UNLIMITED';
+      // Check tiers
+      const isPaid = tier === 'BUNDLE' || tier === 'SINGLE' || tier === 'PAID';
+      const isUnlimited = tier === 'UNLIMITED';
 
-  if (isUnlimited) {
-     systemInstruction = `You are CareerBot, an expert academic advisor with UNLIMITED access.
-      You have access to ALL courses in the catalog, including Career Pivots, Game Design, Non-Profit, PM, Marketing, Restaurant, Podcasting, CS, Business, and Arts.
-      
-      YOUR ROLE:
-      1. You are the ultimate tutor. You can explain ANY concept from ANY of these fields.
-      2. Be encouraging, highly intelligent, and versatile.
-      3. The user has paid for the highest tier, so provide detailed, premium answers.`;
+      if (isUnlimited) {
+         systemInstruction = `You are CareerBot, an expert academic advisor with UNLIMITED access.
+          You have access to ALL courses in the catalog.
+          YOUR ROLE:
+          1. You are the ultimate tutor. You can explain ANY concept.
+          2. Be encouraging, highly intelligent, and versatile.
+          3. The user has paid for the highest tier, so provide detailed, premium answers.`;
+      }
+      else if (isPaid && interest) {
+        const cluster = CATEGORIES.find(c => c.title === interest);
+        
+        if (cluster) {
+          const curriculum = cluster.courses.map(c => 
+            `- Course Title: "${c.title}"\n  Description: ${c.description}\n  Topics/Tags: ${c.tags.join(', ')}`
+          ).join('\n\n');
+
+          systemInstruction = `You are CareerBot, a friendly and expert academic advisor.
+          
+          You have access to the user's specific curriculum for "${interest}". 
+          
+          CURRICULUM DATA:
+          ${curriculum}
+          
+          YOUR ROLE:
+          1. Explain concepts from the courses above simply.
+          2. If the user is in "Learning Mode" (viewing a module), help them understand specific terms from that module.
+          3. Be encouraging and use emojis occasionally to keep the vibe positive 🎓 ✨.
+          4. If asked about a topic NOT in the list above, politely steer them back to their chosen path: "${interest}".
+          `;
+        } else {
+            systemInstruction = "You are CareerBot. You are a helpful AI tutor. The user has a premium account. Help them with general career advice.";
+        }
+      } else {
+        systemInstruction = "You are CareerBot (Demo Mode). You are restricted. You can ONLY answer general questions about why education is important in 1 short sentence. If the user asks about specific course content, say: 'I cannot access that information in Demo Mode. Please sign in.'";
+      }
+
+      chatSession = ai.chats.create({
+        model: 'gemini-3-flash-preview',
+        config: {
+          systemInstruction: systemInstruction,
+        },
+      });
+      return true;
+  } catch (e) {
+      console.error("Failed to initialize GoogleGenAI", e);
+      return false;
   }
-  else if (isPaid && interest) {
-    const cluster = CATEGORIES.find(c => c.title === interest);
-    
-    if (cluster) {
-      const curriculum = cluster.courses.map(c => 
-        `- Course Title: "${c.title}"\n  Description: ${c.description}\n  Topics/Tags: ${c.tags.join(', ')}`
-      ).join('\n\n');
-
-      systemInstruction = `You are CareerBot, a friendly and expert academic advisor.
-      
-      You have access to the user's specific curriculum for "${interest}". 
-      
-      CURRICULUM DATA:
-      ${curriculum}
-      
-      YOUR ROLE:
-      1. Explain concepts from the courses above simply.
-      2. If the user is in "Learning Mode" (viewing a module), help them understand specific terms from that module.
-      3. Be encouraging and use emojis occasionally to keep the vibe positive 🎓 ✨.
-      4. If asked about a topic NOT in the list above, politely steer them back to their chosen path: "${interest}".
-      `;
-    } else {
-        systemInstruction = "You are CareerBot. You are a helpful AI tutor. The user has a premium account. Help them with general career advice.";
-    }
-  } else {
-    systemInstruction = "You are CareerBot (Demo Mode). You are restricted. You can ONLY answer general questions about why education is important in 1 short sentence. If the user asks about specific course content, say: 'I cannot access that information in Demo Mode. Please sign in.'";
-  }
-
-  chatSession = ai.chats.create({
-    model: 'gemini-3-flash-preview',
-    config: {
-      systemInstruction: systemInstruction,
-    },
-  });
-  return true;
 };
 
 const sendMessageToAgent = async (message) => {
   if (!chatSession) {
     const success = initializeChat(currentTier, currentInterest);
-    if (!success) return "⚠️ CONFIGURATION ERROR: API Key is missing.";
+    if (!success) return "⚠️ CONFIGURATION ERROR: API Key is missing or Library failed to load.";
   }
   
   if (!chatSession) {
@@ -243,7 +257,7 @@ const sendMessageToAgent = async (message) => {
     console.error("Gemini Error:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     
-    if (errorMessage.includes("403") || errorMessage.includes("leaked") || errorMessage.includes("expired")) {
+    if (errorMessage.includes("403") || errorMessage.includes("leaked") || errorMessage.includes("expired") || errorMessage.includes("API key not valid")) {
         return "⚠️ API KEY ERROR: Your API key is expired or invalid. Please generate a new one at aistudio.google.com and update the code.";
     }
 
